@@ -1,0 +1,142 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+
+    defaultConfig {
+        applicationId "com.light.weather"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode VERSION_CODE.toInteger()
+        versionName VERSION_NAME
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        buildConfigField "String", "HEWEATHER_KEY", HEWEATHER_KEY
+        buildConfigField "String", "HEWEATHER_URL", HEWEATHER_FREE_URL
+        buildConfigField "String", "APP_ID", APP_ID
+        manifestPlaceholders = [amap_key: AMAP_KEY]
+    }
+    def filePrivateProperties = file("../jks/public.properties")
+    if (filePrivateProperties.exists()) {
+        signingConfigs {
+            release {
+                Properties propsPrivate = new Properties()
+                propsPrivate.load(new FileInputStream(filePrivateProperties))
+
+                storeFile file(propsPrivate['key.store'])
+                keyAlias propsPrivate['key.alias']
+                storePassword propsPrivate['key.store.password']
+                keyPassword propsPrivate['key.alias.password']
+            }
+        }
+    }
+
+    applicationVariants.all { variant ->//获取 variant 参数，就是 productFlavor x buildType
+        variant.outputs.all {
+            if(outputFileName.endsWith('-release.apk')) {//变种名以release.apk结尾时才修改名字
+                outputFileName = outputFileName.replace(outputFileName, "MaterialWeather" + "_" + variant.versionName + ".apk")
+            } else if (outputFileName.endsWith('-debug.apk')) {
+                outputFileName = outputFileName.replace(outputFileName, "MaterialWeather-debug" + "_" + variant.versionName + ".apk")
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            // 显示Log
+            buildConfigField "boolean", "LOG_DEBUG", "true"
+            if (filePrivateProperties.exists()) {
+                signingConfig signingConfigs.release
+            }
+        }
+        release {
+            // 不显示Log
+            buildConfigField "boolean", "LOG_DEBUG", "true"
+            if (filePrivateProperties.exists()) {
+                signingConfig signingConfigs.release
+            }
+            shrinkResources false
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    testImplementation 'junit:junit:4.12'
+    implementation "com.android.support:appcompat-v7:$rootProject.supportLibraryVersion"
+    implementation "com.android.support:design:$rootProject.supportLibraryVersion"
+    //butterknife
+    implementation "com.jakewharton:butterknife:$rootProject.butterknifeVersion"
+    annotationProcessor "com.jakewharton:butterknife-compiler:$rootProject.butterknifeVersion"
+
+    //rxjava
+    implementation 'io.reactivex.rxjava2:rxjava:2.1.6'
+    implementation 'io.reactivex.rxjava2:rxandroid:2.0.1'
+
+    //rxlife
+    implementation 'com.trello.rxlifecycle2:rxlifecycle:2.1.0'
+    implementation 'com.trello.rxlifecycle2:rxlifecycle-android:2.1.0'
+    implementation 'com.trello.rxlifecycle2:rxlifecycle-components:2.1.0'
+
+    //retrofit
+    implementation 'com.squareup.retrofit2:retrofit:2.3.0'
+    implementation 'com.squareup.retrofit2:adapter-rxjava2:2.3.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.3.0'
+
+    //loading layout
+    implementation 'com.lai.weavey:loadinglayout:1.3.1'
+
+    // Dagger dependencies
+    implementation "com.google.dagger:dagger:$rootProject.daggerVersion"
+    annotationProcessor "com.google.dagger:dagger-compiler:$rootProject.daggerVersion"
+
+    //leakcanary
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.5.4'
+    releaseImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.4'
+    testImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.4'
+
+    //sqliteonweb
+    debugImplementation 'io.github.skyhacker2:sqliteonweb:1.0.2'
+    releaseImplementation 'io.github.skyhacker2:sqliteonweb-no-op:1.0.2'
+
+    //高德定位
+    implementation 'com.amap.api:location:3.7.0'
+
+    //rxcache
+    implementation "com.github.VictorAlbertos.RxCache:runtime:1.8.1-2.x"
+    implementation 'com.github.VictorAlbertos.Jolyglot:gson:0.0.4'
+
+    //rxbinding
+    implementation 'com.jakewharton.rxbinding2:rxbinding:2.0.0'
+    implementation 'com.jakewharton.rxbinding2:rxbinding-appcompat-v7:2.0.0'
+
+    //rxpermissions
+    implementation 'com.tbruyelle.rxpermissions2:rxpermissions:0.9.5@aar'
+
+    implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.35'
+
+    // ViewModel and LiveData
+    implementation "android.arch.lifecycle:extensions:1.1.0"
+    // alternatively, just ViewModel
+    //implementation "android.arch.lifecycle:viewmodel:1.1.0"
+    // alternatively, just LiveData
+    //implementation "android.arch.lifecycle:livedata:1.1.0"
+
+    // Room (use 1.1.0-alpha1 for latest alpha)
+    implementation "android.arch.persistence.room:runtime:1.0.0"
+    annotationProcessor "android.arch.persistence.room:compiler:1.0.0"
+    // RxJava support for Room
+    implementation "android.arch.persistence.room:rxjava2:1.0.0"
+
+    implementation 'com.tencent.bugly:crashreport:latest.release' //其中latest.release指代最新Bugly SDK版本号，也可以指定明确的版本号，例如2.2.0
+}
