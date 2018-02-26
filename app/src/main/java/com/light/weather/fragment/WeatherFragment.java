@@ -12,6 +12,8 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ScrollView;
@@ -86,6 +88,31 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
         bundle.putSerializable(ARG_KEY, city);
         fragment.setArguments(bundle);
         return fragment;
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        menu.add(0, R.id.action_share, 0, R.string.action_share)
+                .setIcon(R.drawable.ic_menu_share).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        Log.d(TAG, "onOptionsItemSelected: item = " + item);
+        switch (item.getItemId()) {
+            case R.id.action_share:
+                Log.d(TAG, "onOptionsItemSelected: id = share... isVisible = " + getUserVisibleHint());
+                onShareItemClick();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -241,7 +268,7 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
         mViewModel.getMenuItemMutableLiveData().observe(this, new Observer<MenuItem>() {
             @Override
             public void onChanged(@Nullable MenuItem menuItem) {
-                onMenuItemClick(menuItem);
+                //onMenuItemClick(menuItem);
             }
         });
     }

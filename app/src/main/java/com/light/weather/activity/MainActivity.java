@@ -90,22 +90,22 @@ public class MainActivity extends BaseActivity
                         startActivityForResult(new Intent(MainActivity.this, ManageActivity.class), REQUEST_CODE_CITY);
                     }
                 });
-        RxToolbar.itemClicks(mToolbar)
-                .throttleFirst(1, TimeUnit.SECONDS)
-                .subscribe(new Consumer<MenuItem>() {
-                    @Override
-                    public void accept(MenuItem menuItem) throws Exception {
-                        mViewModel.getMenuItemMutableLiveData().setValue(menuItem);
-                    }
-                });
+//        RxToolbar.itemClicks(mToolbar)
+//                .throttleFirst(1, TimeUnit.SECONDS)
+//                .subscribe(new Consumer<MenuItem>() {
+//                    @Override
+//                    public void accept(MenuItem menuItem) throws Exception {
+//                        mViewModel.getMenuItemMutableLiveData().setValue(menuItem);
+//                    }
+//                });
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//        // Inflate the menu; this adds items to the action bar if it is present.
+//        getMenuInflater().inflate(R.menu.menu_main, menu);
+//        return true;
+//    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
