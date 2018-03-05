@@ -6,7 +6,7 @@
                                       android:layout_width="match_parent"
                                       android:layout_height="match_parent"
                                       app:isFirstVisible="true"
-                                      tools:context="com.light.weather.activity.ManageActivity">
+                                      tools:context=".ui.search.ManageActivity">
 
     <android.support.design.widget.CoordinatorLayout
         android:layout_width="match_parent"

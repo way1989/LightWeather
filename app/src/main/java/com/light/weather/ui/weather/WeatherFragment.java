@@ -1,7 +1,8 @@
-package com.light.weather.fragment;
+package com.light.weather.ui.weather;
 
 import android.Manifest;
-import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProvider;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -26,6 +27,9 @@ import com.light.weather.adapter.SuggestionAdapter;
 import com.light.weather.bean.AqiDetailBean;
 import com.light.weather.bean.City;
 import com.light.weather.bean.HeWeather;
+import com.light.weather.di.Injectable;
+import com.light.weather.ui.common.WeatherViewModel;
+import com.light.weather.ui.base.BaseFragment;
 import com.light.weather.util.FormatUtil;
 import com.light.weather.util.ShareUtils;
 import com.light.weather.util.WeatherUtil;
@@ -43,6 +47,8 @@ import com.trello.rxlifecycle2.android.FragmentEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import butterknife.BindView;
 import io.reactivex.ObservableSource;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -55,7 +61,7 @@ import io.reactivex.schedulers.Schedulers;
  * Created by android on 16-11-10.
  */
 
-public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.OnRefreshListener {
+public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.OnRefreshListener, Injectable{
     private static final String TAG = "WeatherFragment";
     private static final String ARG_KEY = "city";
     @BindView(R.id.w_dailyForecastView)
@@ -82,12 +88,21 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
     private SuggestionAdapter mSuggestionAdapter;
     private AqiAdapter mAqiAdapter;
 
+    @Inject
+    ViewModelProvider.Factory viewModelFactory;
+
     public static WeatherFragment makeInstance(@NonNull City city) {
         WeatherFragment fragment = new WeatherFragment();
         Bundle bundle = new Bundle();
         bundle.putSerializable(ARG_KEY, city);
         fragment.setArguments(bundle);
         return fragment;
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        mViewModel = ViewModelProviders.of(this, viewModelFactory).get(WeatherViewModel.class);
     }
 
     @Override
@@ -143,7 +158,6 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
         return R.layout.fragment_weather;
     }
 
-    @Override
     public void onShareItemClick() {
         if (getUserVisibleHint() && mWeather != null && mWeather.isOK()) {
             final String shareInfo = WeatherUtil.getInstance().getShareMessage(mWeather);
@@ -265,12 +279,6 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
                     mWWeatherScrollView.scrollTo(0, 0);
                 }
             });
-        mViewModel.getMenuItemMutableLiveData().observe(this, new Observer<MenuItem>() {
-            @Override
-            public void onChanged(@Nullable MenuItem menuItem) {
-                //onMenuItemClick(menuItem);
-            }
-        });
     }
 
     private void onMenuItemClick(MenuItem menuItem) {

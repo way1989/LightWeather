@@ -1,22 +1,15 @@
-package com.light.weather.fragment;
+package com.light.weather.ui.base;
 
 import android.os.Bundle;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.light.weather.App;
-import com.light.weather.dagger2.AppComponent;
-import com.light.weather.dagger2.DaggerWeatherComponent;
-import com.light.weather.dagger2.WeatherModule;
-import com.light.weather.dagger2.WeatherViewModel;
+import com.light.weather.ui.common.WeatherViewModel;
 import com.trello.rxlifecycle2.components.support.RxFragment;
-
-import javax.inject.Inject;
 
 import butterknife.ButterKnife;
 
@@ -25,10 +18,11 @@ import butterknife.ButterKnife;
  */
 
 public abstract class BaseFragment extends RxFragment {
+
     protected View mRootView;
     protected boolean mIsViewInitiated;
     protected boolean mIsDataInitiated;
-    @Inject
+    //@Inject
     protected WeatherViewModel mViewModel;
 
     @Override
@@ -64,7 +58,6 @@ public abstract class BaseFragment extends RxFragment {
             mRootView = inflater.inflate(getLayoutId(), container, false);
         ButterKnife.bind(this, mRootView);
 
-        initPresenter(((App) getActivity().getApplication()).getAppComponent());
         initView();
         return mRootView;
     }
@@ -76,16 +69,6 @@ public abstract class BaseFragment extends RxFragment {
         super.onDestroyView();
     }
 
-    //public abstract String getTitle();
-
-
-    /**
-     * should override this method when use MVP
-     */
-    protected void initPresenter(AppComponent appComponent) {
-        DaggerWeatherComponent.builder().appComponent(appComponent)
-                .weatherModule(new WeatherModule((AppCompatActivity) getActivity())).build().inject(this);
-    }
 
     /**
      * must override this method
@@ -96,5 +79,4 @@ public abstract class BaseFragment extends RxFragment {
     @LayoutRes
     int getLayoutId();
 
-    public abstract void onShareItemClick();
 }

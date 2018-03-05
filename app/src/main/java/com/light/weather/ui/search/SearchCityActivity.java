@@ -1,5 +1,7 @@
-package com.light.weather.activity;
+package com.light.weather.ui.search;
 
+import android.arch.lifecycle.ViewModelProvider;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -22,6 +24,8 @@ import com.light.weather.adapter.SearchAdapter;
 import com.light.weather.bean.City;
 import com.light.weather.bean.HotCity;
 import com.light.weather.bean.SearchItem;
+import com.light.weather.ui.common.WeatherViewModel;
+import com.light.weather.ui.base.BaseActivity;
 import com.light.weather.util.AppConstant;
 import com.light.weather.util.RxSchedulers;
 import com.light.weather.widget.SimpleListDividerDecorator;
@@ -35,6 +39,8 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import javax.inject.Inject;
 
 import butterknife.BindView;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -51,10 +57,13 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
     private InputMethodManager mInputMethodManager;
     private List<City> mHotCities;
     private List<SearchItem> mSearchItems;
+    @Inject
+    ViewModelProvider.Factory viewModelFactory;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mViewModel = ViewModelProviders.of(this, viewModelFactory).get(WeatherViewModel.class);
         final ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
@@ -232,4 +241,5 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
         finish();
         return true;
     }
+
 }

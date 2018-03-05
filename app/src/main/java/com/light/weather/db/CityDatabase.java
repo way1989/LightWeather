@@ -1,4 +1,4 @@
-package com.light.weather.api;
+package com.light.weather.db;
 
 import android.arch.persistence.db.SupportSQLiteDatabase;
 import android.arch.persistence.room.Database;

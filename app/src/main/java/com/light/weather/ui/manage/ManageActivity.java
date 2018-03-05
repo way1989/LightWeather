@@ -1,5 +1,7 @@
-package com.light.weather.activity;
+package com.light.weather.ui.manage;
 
+import android.arch.lifecycle.ViewModelProvider;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.graphics.Canvas;
 import android.os.Bundle;
@@ -13,23 +15,28 @@ import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.View;
 
-import com.light.weather.R;
-import com.light.weather.adapter.ManageAdapter;
-import com.light.weather.bean.City;
-import com.light.weather.bean.HeWeather;
-import com.light.weather.util.AppConstant;
-import com.light.weather.util.RxSchedulers;
-import com.light.weather.widget.SimpleListDividerDecorator;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.callback.ItemDragAndSwipeCallback;
 import com.chad.library.adapter.base.listener.OnItemDragListener;
 import com.chad.library.adapter.base.listener.OnItemSwipeListener;
 import com.jakewharton.rxbinding2.view.RxView;
+import com.light.weather.R;
+import com.light.weather.adapter.ManageAdapter;
+import com.light.weather.bean.City;
+import com.light.weather.bean.HeWeather;
+import com.light.weather.ui.common.WeatherViewModel;
+import com.light.weather.ui.base.BaseActivity;
+import com.light.weather.ui.search.SearchCityActivity;
+import com.light.weather.util.AppConstant;
+import com.light.weather.util.RxSchedulers;
+import com.light.weather.widget.SimpleListDividerDecorator;
 import com.trello.rxlifecycle2.android.ActivityEvent;
 import com.weavey.loading.lib.LoadingLayout;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import javax.inject.Inject;
 
 import butterknife.BindView;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -49,14 +56,16 @@ public class ManageActivity extends BaseActivity {
     @BindView(R.id.loading_layout)
     LoadingLayout mLoadingLayout;
 
+    @Inject
+    ViewModelProvider.Factory viewModelFactory;
     private ManageAdapter mAdapter;
-
     private boolean mDataChanged;
     private int mSelectedItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mViewModel = ViewModelProviders.of(this, viewModelFactory).get(WeatherViewModel.class);
         final ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
@@ -221,6 +230,7 @@ public class ManageActivity extends BaseActivity {
             }
         }
     }
+
     private void getWeather(final City city) {
         Log.i(TAG, "getWeather... city = " + city);
         mViewModel.getWeather(city, true)
@@ -259,6 +269,7 @@ public class ManageActivity extends BaseActivity {
                 });
 
     }
+
     @Override
     protected int getLayoutId() {
         return R.layout.activity_manage_city;

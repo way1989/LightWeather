@@ -1,25 +1,22 @@
-package com.light.weather.dagger2;
+package com.light.weather.ui.common;
 
 import android.app.Application;
 import android.arch.lifecycle.AndroidViewModel;
-import android.arch.lifecycle.MutableLiveData;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.MenuItem;
 
 import com.amap.api.location.AMapLocation;
 import com.light.weather.BuildConfig;
-import com.light.weather.activity.MainActivity;
 import com.light.weather.api.ApiService;
 import com.light.weather.api.CacheService;
-import com.light.weather.api.CityDao;
-import com.light.weather.api.CityDatabase;
+import com.light.weather.db.CityDao;
+import com.light.weather.db.CityDatabase;
 import com.light.weather.bean.City;
 import com.light.weather.bean.HeCity;
 import com.light.weather.bean.HeWeather;
 import com.light.weather.data.IRepositoryManager;
-import com.light.weather.util.ActivityScope;
+import com.light.weather.ui.main.MainActivity;
 import com.light.weather.util.RxLocation;
 
 import java.util.ArrayList;
@@ -41,27 +38,16 @@ import io.rx_cache2.EvictProvider;
 /**
  * Created by android on 18-1-29.
  */
-@ActivityScope
 public class WeatherViewModel extends AndroidViewModel {
     private static final String TAG = "WeatherViewModel";
     private static final long TIMEOUT_DURATION = 20L;//20s timeout
     private static final String LANG = "zh-cn";
     private IRepositoryManager mRepositoryManager;//用于管理网络请求层,以及数据缓存层
 
-    private MutableLiveData<MenuItem> mMenuItemMutableLiveData = new MutableLiveData<>();
-
     @Inject
     public WeatherViewModel(@NonNull Application application, IRepositoryManager manager) {
         super(application);
         mRepositoryManager = manager;
-    }
-
-    public void setMenuItem(MenuItem menuItem) {
-        mMenuItemMutableLiveData.setValue(menuItem);
-    }
-
-    public MutableLiveData<MenuItem> getMenuItemMutableLiveData() {
-        return mMenuItemMutableLiveData;
     }
 
     public Observable<List<City>> search(String query) {

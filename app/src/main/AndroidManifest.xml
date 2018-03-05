@@ -34,7 +34,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".activity.MainActivity"
+            android:name=".ui.main.MainActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:hardwareAccelerated="true"
             android:launchMode="singleTop"
@@ -48,13 +48,13 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".activity.ManageActivity"
+            android:name=".ui.manage.ManageActivity"
             android:label="@string/action_city_manage"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="stateAlwaysHidden|adjustNothing" />
 
         <activity
-            android:name=".activity.SearchCityActivity"
+            android:name=".ui.search.SearchCityActivity"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="stateAlwaysHidden|adjustNothing" />
 

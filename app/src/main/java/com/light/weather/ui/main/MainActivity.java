@@ -1,5 +1,7 @@
-package com.light.weather.activity;
+package com.light.weather.ui.main;
 
+import android.arch.lifecycle.ViewModelProvider;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -12,16 +14,17 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 
 import com.light.weather.R;
 import com.light.weather.bean.City;
-import com.light.weather.fragment.BaseFragment;
-import com.light.weather.fragment.WeatherFragment;
+import com.light.weather.ui.common.WeatherViewModel;
+import com.light.weather.ui.base.BaseActivity;
+import com.light.weather.ui.base.BaseFragment;
+import com.light.weather.ui.manage.ManageActivity;
+import com.light.weather.ui.weather.WeatherFragment;
 import com.light.weather.util.RxSchedulers;
 import com.light.weather.util.UiUtil;
 import com.light.weather.widget.SimplePagerIndicator;
@@ -34,15 +37,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import javax.inject.Inject;
+
 import butterknife.BindView;
+import dagger.android.AndroidInjector;
+import dagger.android.DispatchingAndroidInjector;
+import dagger.android.support.HasSupportFragmentInjector;
 import io.reactivex.functions.Consumer;
 
 
 public class MainActivity extends BaseActivity
-        implements WeatherFragment.OnDrawerTypeChangeListener {
+        implements WeatherFragment.OnDrawerTypeChangeListener, HasSupportFragmentInjector {
     private static final String TAG = "MainActivity";
     public static final String UNKNOWN_CITY = "unknown";
     private static final int REQUEST_CODE_CITY = 0;
+    @Inject
+    DispatchingAndroidInjector<Fragment> dispatchingAndroidInjector;
     @BindView(R.id.dynamic_weather_view)
     DynamicWeatherView mDynamicWeatherView;
     @BindView(R.id.main_view_pager)
@@ -56,10 +66,12 @@ public class MainActivity extends BaseActivity
     private MainFragmentPagerAdapter mAdapter;
     private List<City> mCities = new ArrayList<>();
     private int mSelectItem = 0;
-
+    @Inject
+    ViewModelProvider.Factory viewModelFactory;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mViewModel = ViewModelProviders.of(this, viewModelFactory).get(WeatherViewModel.class);
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         mMainViewPager.setPadding(0, UiUtil.getStatusBarHeight() + UiUtil.getActionBarHeight(), 0, 0);
@@ -216,6 +228,11 @@ public class MainActivity extends BaseActivity
             mAdapter.replace(index, city.getCity());
             mIndicator.notifyDataSetChanged();
         }
+    }
+
+    @Override
+    public AndroidInjector<Fragment> supportFragmentInjector() {
+        return dispatchingAndroidInjector;
     }
 
     public static class MainFragmentPagerAdapter extends FragmentPagerAdapter {

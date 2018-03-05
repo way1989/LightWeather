@@ -1,7 +1,6 @@
-package com.light.weather.dagger2;
+package com.light.weather.di;
 
 import android.app.Application;
-import android.content.Context;
 import android.os.Environment;
 
 import com.light.weather.BuildConfig;
@@ -29,26 +28,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 /**
  * Created by android on 16-11-25.
  */
-@Module
-public final class AppModule {
-
-    private final Application mApplication;
-
-    public AppModule(Application application) {
-        mApplication = application;
-    }
-
-    @Provides
-    @Singleton
-    Application provideApplication() {
-        return mApplication;
-    }
-
-    @Provides
-    @Singleton
-    Context provideContext() {
-        return mApplication.getApplicationContext();
-    }
+@Module(includes = ViewModelModule.class)
+final class AppModule {
 
     @Provides
     @Singleton
@@ -85,14 +66,14 @@ public final class AppModule {
 
     @Provides
     @Singleton
-    File getCacheDir(Context context) {
+    File getCacheDir(Application application) {
         File cacheDir = null;
         if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())
                 || !Environment.isExternalStorageRemovable()) {
-            cacheDir = context.getExternalCacheDir();
+            cacheDir = application.getExternalCacheDir();
         }
         if (cacheDir == null) {
-            cacheDir = context.getCacheDir();
+            cacheDir = application.getCacheDir();
         }
         return cacheDir;
     }

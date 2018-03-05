@@ -1,18 +1,12 @@
-package com.light.weather.activity;
+package com.light.weather.ui.base;
 
 import android.os.Bundle;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.Nullable;
 import android.view.MenuItem;
 
-import com.light.weather.App;
-import com.light.weather.dagger2.AppComponent;
-import com.light.weather.dagger2.DaggerWeatherComponent;
-import com.light.weather.dagger2.WeatherModule;
-import com.light.weather.dagger2.WeatherViewModel;
+import com.light.weather.ui.common.WeatherViewModel;
 import com.trello.rxlifecycle2.components.support.RxAppCompatActivity;
-
-import javax.inject.Inject;
 
 import butterknife.ButterKnife;
 
@@ -21,7 +15,9 @@ import butterknife.ButterKnife;
  */
 
 public abstract class BaseActivity extends RxAppCompatActivity {
-    @Inject
+    //@Inject
+//    ViewModelProvider.Factory viewModelFactory;
+//    //@Inject
     protected WeatherViewModel mViewModel;
 
     @Override
@@ -29,7 +25,6 @@ public abstract class BaseActivity extends RxAppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(getLayoutId());
         ButterKnife.bind(this);
-        initPresenter(((App) getApplication()).getAppComponent());
     }
 
     @Override
@@ -42,14 +37,6 @@ public abstract class BaseActivity extends RxAppCompatActivity {
                 break;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    /**
-     * should override this method when use MVP
-     */
-    protected void initPresenter(AppComponent appComponent) {
-        DaggerWeatherComponent.builder().appComponent(appComponent)
-                .weatherModule(new WeatherModule(this)).build().inject(this);
     }
 
     /**
