@@ -2,6 +2,7 @@ package com.light.weather.widget.dynamic;
 
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
+import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -41,7 +42,7 @@ public class FogType extends BaseWeatherType {
 
     public FogType(Resources resources) {
         super(resources);
-        setColor(0xFF8CADD3);
+        setWeatherColor(0xFF8CADD3);
         mPaint = new Paint();
         matrix = new Matrix();
         bitmap = BitmapFactory.decodeResource(resources, R.drawable.ic_fog_ground);
@@ -55,7 +56,7 @@ public class FogType extends BaseWeatherType {
         mPaint.setStyle(Paint.Style.FILL_AND_STROKE);
 
         clearCanvas(canvas);
-        canvas.drawColor(getDynamicColor());
+        canvas.drawColor(mDynamicColor);
 
         matrix.reset();
         matrix.postScale(0.25f, 0.25f);
@@ -81,7 +82,16 @@ public class FogType extends BaseWeatherType {
 
     @Override
     public void startAnimation(int fromColor) {
-        super.startAnimation(fromColor);
+        ValueAnimator backgroundColorAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), fromColor, mWeatherColor);
+        backgroundColorAnimator.setInterpolator(new LinearInterpolator());
+        backgroundColorAnimator.setDuration(1000);
+        backgroundColorAnimator.setRepeatCount(0);
+        backgroundColorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                mDynamicColor = (int) animation.getAnimatedValue();
+            }
+        });
         ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
         animator.setDuration(6000);
         animator.setRepeatCount(-1);
@@ -93,7 +103,6 @@ public class FogType extends BaseWeatherType {
             }
         });
         animator.setStartDelay(3000);
-        animator.start();
 
         ValueAnimator animator2 = ValueAnimator.ofFloat(0, 1);
         animator2.setDuration(6000);
@@ -105,7 +114,6 @@ public class FogType extends BaseWeatherType {
                 fogFactor2 = (float) animation.getAnimatedValue();
             }
         });
-        animator2.start();
 
         ValueAnimator animator3 = ValueAnimator.ofFloat(-bitmap.getWidth() * 0.25f, getWidth() - bitmap.getWidth() * 0.25f);
         animator3.setDuration(1000);
@@ -117,8 +125,10 @@ public class FogType extends BaseWeatherType {
                 transFactor = (float) animation.getAnimatedValue();
             }
         });
-        animator3.start();
 
+        mStartAnimatorSet = new AnimatorSet();
+        mStartAnimatorSet.play(backgroundColorAnimator).with(animator).with(animator2).with(animator3);
+        mStartAnimatorSet.start();
     }
 
     @Override
@@ -150,12 +160,12 @@ public class FogType extends BaseWeatherType {
             }
         });
 
-        AnimatorSet animSet = new AnimatorSet();
-        animSet.play(animator).with(animator2).with(animator3);
-        animSet.setDuration(END_ANIM_DURATION);
+        mEndAnimatorSet = new AnimatorSet();
+        mEndAnimatorSet.play(animator).with(animator2).with(animator3);
+        mEndAnimatorSet.setDuration(END_ANIM_DURATION);
         if (listener != null) {
-            animSet.addListener(listener);
+            mEndAnimatorSet.addListener(listener);
         }
-        animSet.start();
+        mEndAnimatorSet.start();
     }
 }

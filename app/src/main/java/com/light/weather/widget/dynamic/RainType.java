@@ -1,6 +1,8 @@
 package com.light.weather.widget.dynamic;
 
 import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -16,6 +18,7 @@ import android.os.Looper;
 import android.support.annotation.IntDef;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
+import android.view.animation.LinearInterpolator;
 import android.view.animation.OvershootInterpolator;
 
 import com.light.weather.R;
@@ -63,7 +66,7 @@ public class RainType extends BaseWeatherType {
 
     public RainType(Resources resources, @RainLevel int rainLevel, @WindLevel int windLevel) {
         super(resources);
-        setColor(0xFF6188DA);
+        setWeatherColor(0xFF6188DA);
         this.rainLevel = rainLevel;
         this.windLevel = windLevel;
         mPaint = new Paint();
@@ -88,7 +91,7 @@ public class RainType extends BaseWeatherType {
     @Override
     public void onDrawElements(Canvas canvas) {
         clearCanvas(canvas);
-        canvas.drawColor(getDynamicColor());
+        canvas.drawColor(mDynamicColor);
         mPaint.setAlpha(255);
         mPaint.setStyle(Paint.Style.STROKE);
 
@@ -277,7 +280,7 @@ public class RainType extends BaseWeatherType {
 
     public void setFlashing(boolean flashing) {
         isFlashing = flashing;
-        setColor(0xFF7187DB);
+        setWeatherColor(0xFF7187DB);
     }
 
     public boolean isSnowing() {
@@ -286,12 +289,22 @@ public class RainType extends BaseWeatherType {
 
     public void setSnowing(boolean snowing) {
         isSnowing = snowing;
-        setColor(0xFF5697D8);
+        setWeatherColor(0xFF5697D8);
     }
 
     @Override
     public void startAnimation(int fromColor) {
-        super.startAnimation(fromColor);
+        ValueAnimator backgroundColorAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), fromColor, mWeatherColor);
+        backgroundColorAnimator.setInterpolator(new LinearInterpolator());
+        backgroundColorAnimator.setDuration(1000);
+        backgroundColorAnimator.setRepeatCount(0);
+        backgroundColorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                mDynamicColor = (int) animation.getAnimatedValue();
+            }
+        });
+
         ValueAnimator animator = ValueAnimator.ofFloat(-bitmap.getWidth() * 0.2f, getWidth() - bitmap.getWidth() * 0.2f);
         animator.setDuration(1000);
         animator.setRepeatCount(0);
@@ -303,7 +316,9 @@ public class RainType extends BaseWeatherType {
             }
         });
 
-        animator.start();
+        mStartAnimatorSet = new AnimatorSet();
+        mStartAnimatorSet.play(backgroundColorAnimator).with(animator);
+        mStartAnimatorSet.start();
 
         flashRunnable = new Runnable() {
             @Override
@@ -338,10 +353,12 @@ public class RainType extends BaseWeatherType {
                 transFactor = (float) animation.getAnimatedValue();
             }
         });
+        mEndAnimatorSet = new AnimatorSet();
+        mEndAnimatorSet.play(animator);
         if (listener != null) {
-            animator.addListener(listener);
+            mEndAnimatorSet.addListener(listener);
         }
-        animator.start();
+        mEndAnimatorSet.start();
     }
 
     @IntDef({RAIN_LEVEL_1, RAIN_LEVEL_2, RAIN_LEVEL_3})

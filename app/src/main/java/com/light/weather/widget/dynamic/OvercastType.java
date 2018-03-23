@@ -1,6 +1,8 @@
 package com.light.weather.widget.dynamic;
 
 import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
 import android.content.res.Resources;
 import android.graphics.Canvas;
@@ -47,7 +49,7 @@ public class OvercastType extends BaseWeatherType {
 
     public OvercastType(Resources resources, ShortWeatherInfo info) {
         super(resources);
-        setColor(0xFF6D8DB1);
+        setWeatherColor(0xFF6D8DB1);
         mPathFront = new Path();
         mPathRear = new Path();
         mPaint = new Paint();
@@ -68,7 +70,7 @@ public class OvercastType extends BaseWeatherType {
         mPaint.setStyle(Paint.Style.FILL_AND_STROKE);
 
         clearCanvas(canvas);
-        canvas.drawColor(getDynamicColor());
+        canvas.drawColor(mDynamicColor);
 
         mPaint.setAlpha(100);
 
@@ -167,7 +169,17 @@ public class OvercastType extends BaseWeatherType {
 
     @Override
     public void startAnimation(int fromColor) {
-        super.startAnimation(fromColor);
+        ValueAnimator backgroundColorAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), fromColor, mWeatherColor);
+        backgroundColorAnimator.setInterpolator(new LinearInterpolator());
+        backgroundColorAnimator.setDuration(1000);
+        backgroundColorAnimator.setRepeatCount(0);
+        backgroundColorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                mDynamicColor = (int) animation.getAnimatedValue();
+            }
+        });
+
         ValueAnimator animator = ValueAnimator.ofFloat(-0.2f, 1.2f);
         animator.setDuration(30000);
         animator.setRepeatCount(-1);
@@ -178,7 +190,6 @@ public class OvercastType extends BaseWeatherType {
                 cloudTransFactor = (float) animation.getAnimatedValue();
             }
         });
-        animator.start();
 
         ValueAnimator animator2 = ValueAnimator.ofFloat(0, 1);
         animator2.setDuration(1000);
@@ -190,7 +201,10 @@ public class OvercastType extends BaseWeatherType {
                 hillTransFactor = (float) animation.getAnimatedValue();
             }
         });
-        animator2.start();
+
+        mStartAnimatorSet = new AnimatorSet();
+        mStartAnimatorSet.play(backgroundColorAnimator).with(animator).with(animator2);
+        mStartAnimatorSet.start();
     }
 
     @Override
@@ -205,9 +219,12 @@ public class OvercastType extends BaseWeatherType {
                 hillTransFactor = (float) animation.getAnimatedValue();
             }
         });
+
+        mEndAnimatorSet = new AnimatorSet();
+        mEndAnimatorSet.play(animator);
         if (listener != null) {
-            animator.addListener(listener);
+            mEndAnimatorSet.addListener(listener);
         }
-        animator.start();
+        mEndAnimatorSet.start();
     }
 }

@@ -2,6 +2,7 @@ package com.light.weather.widget.dynamic;
 
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
+import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -15,6 +16,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Shader;
 import android.view.animation.AccelerateInterpolator;
+import android.view.animation.LinearInterpolator;
 import android.view.animation.OvershootInterpolator;
 
 import com.light.weather.R;
@@ -38,7 +40,7 @@ public class HazeType extends BaseWeatherType {
 
     public HazeType(Resources resources) {
         super(resources);
-        setColor(0xFF7F8195);
+        setWeatherColor(0xFF7F8195);
         mPathFront = new Path();
         mPathRear = new Path();
         mPaint = new Paint();
@@ -55,7 +57,7 @@ public class HazeType extends BaseWeatherType {
         mPaint.setStyle(Paint.Style.FILL_AND_STROKE);
 
         clearCanvas(canvas);
-        canvas.drawColor(getDynamicColor());
+        canvas.drawColor(mDynamicColor);
 
         Shader shader = new LinearGradient(0, getHeight(), getWidth(), getHeight(), 0x33ffffff, 0xccffffff, Shader.TileMode.CLAMP);
         mPaint.setShader(shader);
@@ -118,7 +120,17 @@ public class HazeType extends BaseWeatherType {
 
     @Override
     public void startAnimation(int fromColor) {
-        super.startAnimation(fromColor);
+        ValueAnimator backgroundColorAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), fromColor, mWeatherColor);
+        backgroundColorAnimator.setInterpolator(new LinearInterpolator());
+        backgroundColorAnimator.setDuration(1000);
+        backgroundColorAnimator.setRepeatCount(0);
+        backgroundColorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                mDynamicColor = (int) animation.getAnimatedValue();
+            }
+        });
+
         ValueAnimator animator1 = ValueAnimator.ofFloat(0, 1);
         animator1.setInterpolator(new OvershootInterpolator());
         animator1.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -129,10 +141,10 @@ public class HazeType extends BaseWeatherType {
             }
         });
 
-        AnimatorSet animSet = new AnimatorSet();
-        animSet.play(animator1);
-        animSet.setDuration(1000);
-        animSet.start();
+        mStartAnimatorSet = new AnimatorSet();
+        mStartAnimatorSet.play(backgroundColorAnimator).with(animator1);
+        mStartAnimatorSet.setDuration(1000);
+        mStartAnimatorSet.start();
 
     }
 
@@ -148,12 +160,12 @@ public class HazeType extends BaseWeatherType {
             }
         });
 
-        AnimatorSet animSet = new AnimatorSet();
-        animSet.play(animator1);
-        animSet.setDuration(1000);
+        mEndAnimatorSet = new AnimatorSet();
+        mEndAnimatorSet.play(animator1);
+        mEndAnimatorSet.setDuration(END_ANIM_DURATION);
         if (listener != null) {
-            animSet.addListener(listener);
+            mEndAnimatorSet.addListener(listener);
         }
-        animSet.start();
+        mEndAnimatorSet.start();
     }
 }

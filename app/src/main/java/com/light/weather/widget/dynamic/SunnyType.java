@@ -2,6 +2,7 @@ package com.light.weather.widget.dynamic;
 
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
+import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -84,10 +85,10 @@ public class SunnyType extends BaseWeatherType {
         currentSunPosition = TimeUtils.getTimeDiffPercent(info.getSunrise(), info.getSunset());
         currentMoonPosition = TimeUtils.getTimeDiffPercent(info.getMoonrise(), info.getMoonset());
         if (currentSunPosition >= 0 && currentSunPosition <= 1) {
-            setColor(colorDay);
+            setWeatherColor(colorDay);
             boat = BitmapFactory.decodeResource(resources, R.drawable.ic_boat_day);
         } else {
-            setColor(colorNight);
+            setWeatherColor(colorNight);
             boat = BitmapFactory.decodeResource(resources, R.drawable.ic_boat_night);
         }
 
@@ -112,7 +113,7 @@ public class SunnyType extends BaseWeatherType {
         mPaint.setStyle(Paint.Style.FILL_AND_STROKE);
 
         clearCanvas(canvas);
-        canvas.drawColor(getDynamicColor());
+        canvas.drawColor(mDynamicColor);
 
         if (currentSunPosition >= 0 && currentSunPosition <= 1) {
             mPaint.setMaskFilter(new BlurMaskFilter(10, BlurMaskFilter.Blur.SOLID));
@@ -127,7 +128,7 @@ public class SunnyType extends BaseWeatherType {
         } else if (currentMoonPosition >= 0 && currentMoonPosition <= 1) {
             mPaint.setMaskFilter(new BlurMaskFilter(10, BlurMaskFilter.Blur.SOLID));
             canvas.drawCircle(moonPos[0], moonPos[1], 40, mPaint);
-            mPaint.setColor(getDynamicColor());
+            mPaint.setColor(mDynamicColor);
             canvas.drawCircle(moonPos[0] + 20, moonPos[1] - 20, 40, mPaint);
             mPaint.setColor(Color.WHITE);
             mPaint.setMaskFilter(null);
@@ -215,7 +216,17 @@ public class SunnyType extends BaseWeatherType {
 
     @Override
     public void startAnimation(int fromColor) {
-        super.startAnimation(fromColor);
+        ValueAnimator backgroundColorAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), fromColor, mWeatherColor);
+        backgroundColorAnimator.setInterpolator(new LinearInterpolator());
+        backgroundColorAnimator.setDuration(1000);
+        backgroundColorAnimator.setRepeatCount(0);
+        backgroundColorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                mDynamicColor = (int) animation.getAnimatedValue();
+            }
+        });
+
         sunPos = new float[2];
         sunTan = new float[2];
         moonPos = new float[2];
@@ -230,7 +241,6 @@ public class SunnyType extends BaseWeatherType {
                 speed = (float) animation.getAnimatedValue() * 32;
             }
         });
-        animator.start();
 
         ValueAnimator animator2 = ValueAnimator.ofFloat(1.5f, 1);
         animator2.setDuration(3000);
@@ -242,7 +252,6 @@ public class SunnyType extends BaseWeatherType {
                 boardSpeed = (float) animation.getAnimatedValue();
             }
         });
-        animator2.start();
 
         ValueAnimator animator3 = ValueAnimator.ofFloat(-0.5f, 1);
         animator3.setDuration(3000);
@@ -254,7 +263,6 @@ public class SunnyType extends BaseWeatherType {
                 cloudSpeed = (float) animation.getAnimatedValue();
             }
         });
-        animator3.start();
 
         ValueAnimator sunAnimator = ValueAnimator.ofFloat(0, 1);
         sunAnimator.setDuration(3000);
@@ -267,7 +275,6 @@ public class SunnyType extends BaseWeatherType {
                 sunMeasure.getPosTan(sunMeasure.getLength() * (float) animation.getAnimatedValue() * currentMoonPosition, moonPos, moonTan);
             }
         });
-        sunAnimator.start();
 
         ValueAnimator animatorCloud = ValueAnimator.ofFloat(-10, 10);
         animatorCloud.setDuration(2000);
@@ -280,7 +287,11 @@ public class SunnyType extends BaseWeatherType {
                 cloudShake = (float) animation.getAnimatedValue();
             }
         });
-        animatorCloud.start();
+
+        mStartAnimatorSet = new AnimatorSet();
+        mStartAnimatorSet.play(backgroundColorAnimator).with(animator).with(animator2)
+                .with(animator3).with(sunAnimator).with(animatorCloud);
+        mStartAnimatorSet.start();
     }
 
     @Override
@@ -323,12 +334,12 @@ public class SunnyType extends BaseWeatherType {
 
         });
 
-        AnimatorSet animSet = new AnimatorSet();
-        animSet.play(animator1).with(animator2).with(animator3).with(animator4);
-        animSet.setDuration(END_ANIM_DURATION);
+        mEndAnimatorSet = new AnimatorSet();
+        mEndAnimatorSet.play(animator1).with(animator2).with(animator3).with(animator4);
+        mEndAnimatorSet.setDuration(END_ANIM_DURATION);
         if (listener != null) {
-            animSet.addListener(listener);
+            mEndAnimatorSet.addListener(listener);
         }
-        animSet.start();
+        mEndAnimatorSet.start();
     }
 }

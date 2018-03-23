@@ -1,6 +1,7 @@
 package com.light.weather.widget.dynamic;
 
 import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
 import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
 import android.content.res.Resources;
@@ -17,12 +18,14 @@ import java.util.Random;
 
 public abstract class BaseWeatherType implements WeatherHandler {
     protected static final long START_ANIM_DURATION = 3000L;
-    protected static final long END_ANIM_DURATION = 400L;
-    protected int color;
-    private int dynamicColor;
-    protected Resources mResources;
+    protected static final long END_ANIM_DURATION = 1000L;
+    protected int mWeatherColor;
+    protected int mDynamicColor;
+    private Resources mResources;
     private int mWidth;
     private int mHeight;
+    protected AnimatorSet mStartAnimatorSet;
+    protected AnimatorSet mEndAnimatorSet;
 
     public BaseWeatherType(Resources resources) {
         mResources = resources;
@@ -41,33 +44,28 @@ public abstract class BaseWeatherType implements WeatherHandler {
         this.mHeight = height;
     }
 
-    public int getColor() {
-        return color;
+    public int getWeatherColor() {
+        return mWeatherColor;
     }
 
-    public void setColor(int color) {
-        this.color = color;
-    }
+    public void end() {
+        if (mStartAnimatorSet != null) {
+            mStartAnimatorSet.removeAllListeners();
+            mStartAnimatorSet.end();
+        }
 
-    public int getDynamicColor() {
-        return dynamicColor;
+        if (mEndAnimatorSet != null) {
+            mEndAnimatorSet.removeAllListeners();
+            mEndAnimatorSet.end();
+        }
+    }
+    public void setWeatherColor(int weatherColor) {
+        this.mWeatherColor = weatherColor;
     }
 
     public abstract void generateElements();
 
-    public void startAnimation(int fromColor) {
-        ValueAnimator animator = ValueAnimator.ofObject(new ArgbEvaluator(), fromColor, color);
-        animator.setInterpolator(new LinearInterpolator());
-        animator.setDuration(1000);
-        animator.setRepeatCount(0);
-        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                dynamicColor = (int) animation.getAnimatedValue();
-            }
-        });
-        animator.start();
-    }
+    public abstract void startAnimation(int fromColor);
 
     public abstract void endAnimation(AnimatorListenerAdapter listener);
 

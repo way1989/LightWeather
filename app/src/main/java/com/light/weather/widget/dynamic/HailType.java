@@ -1,6 +1,8 @@
 package com.light.weather.widget.dynamic;
 
 import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -10,6 +12,7 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.view.animation.AccelerateInterpolator;
+import android.view.animation.LinearInterpolator;
 import android.view.animation.OvershootInterpolator;
 
 import com.light.weather.R;
@@ -30,7 +33,7 @@ public class HailType extends BaseWeatherType {
 
     public HailType(Resources resources) {
         super(resources);
-        setColor(0xFF0CB399);
+        setWeatherColor(0xFF0CB399);
         mPaint = new Paint();
         mPaint.setAntiAlias(true);
         mPaint.setColor(Color.WHITE);
@@ -43,7 +46,7 @@ public class HailType extends BaseWeatherType {
     @Override
     public void onDrawElements(Canvas canvas) {
         clearCanvas(canvas);
-        canvas.drawColor(getDynamicColor());
+        canvas.drawColor(mDynamicColor);
         mPaint.setAlpha(255);
         matrix.reset();
         matrix.postScale(0.25f, 0.25f);
@@ -85,7 +88,17 @@ public class HailType extends BaseWeatherType {
 
     @Override
     public void startAnimation(int fromColor) {
-        super.startAnimation(fromColor);
+        ValueAnimator backgroundColorAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), fromColor, mWeatherColor);
+        backgroundColorAnimator.setInterpolator(new LinearInterpolator());
+        backgroundColorAnimator.setDuration(1000);
+        backgroundColorAnimator.setRepeatCount(0);
+        backgroundColorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                mDynamicColor = (int) animation.getAnimatedValue();
+            }
+        });
+
         ValueAnimator animator = ValueAnimator.ofFloat(-bitmap.getWidth() * 0.25f, getWidth() - bitmap.getWidth() * 0.25f);
         animator.setDuration(1000);
         animator.setRepeatCount(0);
@@ -96,14 +109,14 @@ public class HailType extends BaseWeatherType {
                 transFactor = (float) animation.getAnimatedValue();
             }
         });
-
-        animator.start();
+        mStartAnimatorSet = new AnimatorSet();
+        mStartAnimatorSet.play(backgroundColorAnimator).with(animator);
+        mStartAnimatorSet.start();
     }
 
     @Override
     public void endAnimation(AnimatorListenerAdapter listener) {
         ValueAnimator animator = ValueAnimator.ofFloat(getWidth() - bitmap.getWidth() * 0.25f, getWidth());
-        animator.setDuration(END_ANIM_DURATION);
         animator.setRepeatCount(0);
         animator.setInterpolator(new AccelerateInterpolator());
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -112,19 +125,22 @@ public class HailType extends BaseWeatherType {
                 transFactor = (float) animation.getAnimatedValue();
             }
         });
+        mEndAnimatorSet = new AnimatorSet();
+        mEndAnimatorSet.play(animator);
+        mEndAnimatorSet.setDuration(END_ANIM_DURATION);
         if (listener != null) {
-            animator.addListener(listener);
+            mEndAnimatorSet.addListener(listener);
         }
-        animator.start();
+        mEndAnimatorSet.start();
     }
 
-    private class Hail {
+    private static class Hail {
         int x;
         int y;
         int size;
         int speed;
 
-        public Hail(int x, int y, int size, int speed) {
+        Hail(int x, int y, int size, int speed) {
             this.x = x;
             this.y = y;
             this.size = size;

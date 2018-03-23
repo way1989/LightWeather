@@ -43,16 +43,17 @@ public class DynamicWeatherView extends TextureView implements TextureView.Surfa
     }
 
     public int getColor() {
-        return mWeatherType.getColor();
+        return mWeatherType.getWeatherColor();
     }
 
     public void setType(final BaseWeatherType type) {
         if (mWeatherType != null) {
+            mWeatherType.end();
             mWeatherType.endAnimation(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     super.onAnimationEnd(animation);
-                    mFromColor = mWeatherType.getColor();
+                    mFromColor = mWeatherType.getWeatherColor();
                     mWeatherType = type;
                     mDrawThread.setWeatherType(type);
                     if (mWeatherType != null) {
@@ -63,7 +64,7 @@ public class DynamicWeatherView extends TextureView implements TextureView.Surfa
                 }
             });
         } else {
-            mFromColor = type.getColor();
+            mFromColor = type.getWeatherColor();
             mWeatherType = type;
             mWeatherType.onSizeChanged(mViewWidth, mViewHeight);
             mWeatherType.startAnimation(mFromColor);
@@ -107,7 +108,7 @@ public class DynamicWeatherView extends TextureView implements TextureView.Surfa
         mDrawThread.setWeatherType(mWeatherType);
         mDrawThread.setRunning(true);
         mDrawThread.start();
-        mWeatherType.startAnimation(mWeatherType.getColor());
+        mWeatherType.startAnimation(mWeatherType.getWeatherColor());
 
     }
 
