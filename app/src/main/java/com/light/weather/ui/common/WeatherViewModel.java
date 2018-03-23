@@ -40,7 +40,7 @@ import io.rx_cache2.EvictProvider;
  */
 public class WeatherViewModel extends AndroidViewModel {
     private static final String TAG = "WeatherViewModel";
-    private static final long TIMEOUT_DURATION = 20L;//20s timeout
+    private static final long TIMEOUT_DURATION = 30L;//20s timeout
     private static final String LANG = "zh-cn";
     private IRepositoryManager mRepositoryManager;//用于管理网络请求层,以及数据缓存层
 
@@ -183,7 +183,12 @@ public class WeatherViewModel extends AndroidViewModel {
                                             cityDao.delete(exist);
                                         }
                                         cityDao.insert(city);
-                                        return city;
+                                        //如果原来未定位或者定位城市不一样，则刷新
+                                        //if (exist == null || !TextUtils.equals(city.getAreaId(), exist.getAreaId())) {
+                                            return city;
+//                                        } else {
+//                                            return null;
+//                                        }
                                     }
                                 });
                     }

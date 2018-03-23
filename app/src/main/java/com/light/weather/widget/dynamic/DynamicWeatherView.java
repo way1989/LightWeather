@@ -37,9 +37,6 @@ public class DynamicWeatherView extends TextureView implements TextureView.Surfa
         super(context, attrs, defStyleAttr);
         mWeatherType = new DefaultType(context.getResources());
         setSurfaceTextureListener(this);
-//        SurfaceHolder holder = getHolder();
-//        holder.addCallback(this);
-//        holder.setFormat(PixelFormat.RGBA_8888);
     }
 
     public int getColor() {
@@ -58,9 +55,8 @@ public class DynamicWeatherView extends TextureView implements TextureView.Surfa
                     mDrawThread.setWeatherType(type);
                     if (mWeatherType != null) {
                         mWeatherType.onSizeChanged(mViewWidth, mViewHeight);
-                    }
-                    if (mWeatherType != null)
                         mWeatherType.startAnimation(mFromColor);
+                    }
                 }
             });
         } else {
@@ -98,6 +94,7 @@ public class DynamicWeatherView extends TextureView implements TextureView.Surfa
         mDrawThread.setRunning(false);
         setSurfaceTextureListener(null);
         if (mWeatherType != null) {
+            mWeatherType.end();
             mWeatherType.endAnimation(null);
         }
     }
