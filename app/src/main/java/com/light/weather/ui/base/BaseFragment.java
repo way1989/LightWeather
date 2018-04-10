@@ -4,48 +4,50 @@ import android.os.Bundle;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.light.weather.ui.common.WeatherViewModel;
-import com.trello.rxlifecycle2.components.support.RxFragment;
 
 import butterknife.ButterKnife;
+import io.reactivex.disposables.CompositeDisposable;
 
 /**
  * Created by android on 18-1-30.
  */
 
-public abstract class BaseFragment extends RxFragment {
+public abstract class BaseFragment extends Fragment {
 
     protected View mRootView;
-    protected boolean mIsViewInitiated;
     protected boolean mIsDataInitiated;
-    //@Inject
+    protected boolean mIsViewInitiated;
     protected WeatherViewModel mViewModel;
+    protected CompositeDisposable mDisposable;
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser) {
+            prepareFetchData();
+        }
+    }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        mDisposable = new CompositeDisposable();
         mIsViewInitiated = true;
         prepareFetchData();
-    }
-
-    @Override
-
-    public void setUserVisibleHint(boolean isVisibleToUser) {
-        super.setUserVisibleHint(isVisibleToUser);
-        if (isVisibleToUser)
-            prepareFetchData();
     }
 
     public abstract void loadDataFirstTime();
 
     private boolean prepareFetchData() {
         if (getUserVisibleHint() && mIsViewInitiated && !mIsDataInitiated) {
-            loadDataFirstTime();
             mIsDataInitiated = true;
+            loadDataFirstTime();
             return true;
         }
         return false;
@@ -67,6 +69,10 @@ public abstract class BaseFragment extends RxFragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        mRootView = null;
+        mIsDataInitiated = false;
+        mIsViewInitiated = false;
+        mDisposable.clear();
     }
 
 

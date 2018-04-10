@@ -28,7 +28,7 @@
         android:layout_height="match_parent"
         android:layout_gravity="top|start"
         android:scaleType="center"
-        android:src="@drawable/ic_drag_handle" />
+        android:src="@drawable/ic_draggable_vert_grey_600_24dp" />
 
 
     <TextView

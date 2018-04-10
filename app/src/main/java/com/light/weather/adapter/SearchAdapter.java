@@ -37,6 +37,7 @@ public class SearchAdapter extends BaseSectionQuickAdapter<SearchItem, BaseViewH
     @Override
     protected void convert(BaseViewHolder helper, SearchItem item) {
         City city = item.t;
+        helper.itemView.setTag(city);
         TextView cityName = helper.getView(R.id.city_name_tv);
         TextView cityProv = helper.getView(R.id.city_prov_tv);
         cityName.setText(city.getCity());

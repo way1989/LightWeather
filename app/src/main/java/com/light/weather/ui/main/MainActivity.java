@@ -17,12 +17,14 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.Toast;
 
+import com.jakewharton.rxbinding2.support.v7.widget.RxToolbar;
 import com.light.weather.R;
 import com.light.weather.bean.City;
-import com.light.weather.ui.common.WeatherViewModel;
 import com.light.weather.ui.base.BaseActivity;
 import com.light.weather.ui.base.BaseFragment;
+import com.light.weather.ui.common.WeatherViewModel;
 import com.light.weather.ui.manage.ManageActivity;
 import com.light.weather.ui.weather.WeatherFragment;
 import com.light.weather.util.RxSchedulers;
@@ -30,8 +32,6 @@ import com.light.weather.util.UiUtil;
 import com.light.weather.widget.SimplePagerIndicator;
 import com.light.weather.widget.dynamic.BaseWeatherType;
 import com.light.weather.widget.dynamic.DynamicWeatherView;
-import com.jakewharton.rxbinding2.support.v7.widget.RxToolbar;
-import com.trello.rxlifecycle2.android.ActivityEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,7 +74,7 @@ public class MainActivity extends BaseActivity
         setTheme(R.style.AppTheme_NoActionBar);
         mViewModel = ViewModelProviders.of(this, viewModelFactory).get(WeatherViewModel.class);
 
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+//        getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         mMainViewPager.setPadding(0, UiUtil.getStatusBarHeight() + UiUtil.getActionBarHeight(), 0, 0);
         mAppBarLayout.setPadding(0, UiUtil.getStatusBarHeight(), 0, 0);
         ((ViewGroup) mIndicator.getParent()).setPadding(0, UiUtil.getStatusBarHeight(), 0, 0);
@@ -95,30 +95,15 @@ public class MainActivity extends BaseActivity
     private void setupToolBar() {
         setTitle("");
         mToolbar.setNavigationIcon(R.drawable.ic_location_city);
-        RxToolbar.navigationClicks(mToolbar)
+        mDisposable.add(RxToolbar.navigationClicks(mToolbar)
                 .throttleFirst(1, TimeUnit.SECONDS)
                 .subscribe(new Consumer<Object>() {
                     @Override
                     public void accept(Object o) throws Exception {
                         startActivityForResult(new Intent(MainActivity.this, ManageActivity.class), REQUEST_CODE_CITY);
                     }
-                });
-//        RxToolbar.itemClicks(mToolbar)
-//                .throttleFirst(1, TimeUnit.SECONDS)
-//                .subscribe(new Consumer<MenuItem>() {
-//                    @Override
-//                    public void accept(MenuItem menuItem) throws Exception {
-//                        mViewModel.getMenuItemMutableLiveData().setValue(menuItem);
-//                    }
-//                });
+                }));
     }
-
-//    @Override
-//    public boolean onCreateOptionsMenu(Menu menu) {
-//        // Inflate the menu; this adds items to the action bar if it is present.
-//        getMenuInflater().inflate(R.menu.menu_main, menu);
-//        return true;
-//    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -135,28 +120,18 @@ public class MainActivity extends BaseActivity
         }
     }
 
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        if (hasFocus) {
-            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
-        }
-    }
+//    @Override
+//    public void onWindowFocusChanged(boolean hasFocus) {
+//        super.onWindowFocusChanged(hasFocus);
+//        if (hasFocus) {
+//            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
+//        }
+//    }
 
     @Override
     protected void onResume() {
         super.onResume();
         mDynamicWeatherView.onResume();
-//        RxBus.getInstance().toObservable(BaseWeatherType.class)
-//                .debounce(400, TimeUnit.MILLISECONDS)
-//                .compose(this.<BaseWeatherType>bindUntilEvent(ActivityEvent.PAUSE))
-//                .observeOn(AndroidSchedulers.mainThread())
-//                .subscribe(new Consumer<BaseWeatherType>() {
-//                    @Override
-//                    public void accept(BaseWeatherType baseWeatherType) throws Exception {
-//                        onDrawerTypeChange(baseWeatherType);
-//                    }
-//                });
     }
 
     @Override
@@ -193,9 +168,8 @@ public class MainActivity extends BaseActivity
 
     public void getCities() {
         Log.d(TAG, "getCities: start.... mViewModel = " + mViewModel);
-        mViewModel.getCities()
+        mDisposable.add(mViewModel.getCities()
                 .compose(RxSchedulers.<List<City>>io_main())
-                .compose(this.<List<City>>bindUntilEvent(ActivityEvent.DESTROY))
                 .subscribe(new Consumer<List<City>>() {
                     @Override
                     public void accept(List<City> cities) throws Exception {
@@ -205,9 +179,10 @@ public class MainActivity extends BaseActivity
                 }, new Consumer<Throwable>() {
                     @Override
                     public void accept(Throwable throwable) throws Exception {
+                        Toast.makeText(getApplicationContext(), "getCities onError: " + throwable, Toast.LENGTH_LONG).show();
                         Log.d(TAG, "getCities onError: ", throwable);
                     }
-                });
+                }));
     }
 
     @Override

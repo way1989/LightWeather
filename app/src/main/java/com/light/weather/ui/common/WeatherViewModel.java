@@ -6,16 +6,15 @@ import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.amap.api.location.AMapLocation;
 import com.light.weather.BuildConfig;
 import com.light.weather.api.ApiService;
 import com.light.weather.api.CacheService;
-import com.light.weather.db.CityDao;
-import com.light.weather.db.CityDatabase;
 import com.light.weather.bean.City;
 import com.light.weather.bean.HeCity;
 import com.light.weather.bean.HeWeather;
 import com.light.weather.data.IRepositoryManager;
+import com.light.weather.db.CityDao;
+import com.light.weather.db.CityDatabase;
 import com.light.weather.ui.main.MainActivity;
 import com.light.weather.util.RxLocation;
 
@@ -146,23 +145,6 @@ public class WeatherViewModel extends AndroidViewModel {
         return new RxLocation(getApplication())
 //                .timeout(TIMEOUT_DURATION, TimeUnit.SECONDS)
                 .observeOn(Schedulers.io())
-                .map(new Function<AMapLocation, String>() {
-                    @Override
-                    public String apply(AMapLocation location) throws Exception {
-                        if (location.getErrorCode() != 0) {
-                            //定位失败时，可通过ErrCode（错误码）信息来确定失败的原因，errInfo是错误信息，详见错误码表。
-                            Log.e(TAG, "getLocation Error!!! ErrCode:" + location.getErrorCode()
-                                    + ", errInfo:" + location.getErrorInfo());
-                            throw new Exception(location.getAdCode() + ": " + location.getErrorInfo());
-                        }
-                        final double longitude = location.getLongitude();
-                        final double latitude = location.getLatitude();
-                        String coordinate = latitude + "," + longitude;
-//                        String coordinate = location.getCity().replace("市", "");
-                        Log.d(TAG, "getLocation: location = " + coordinate);
-                        return coordinate;
-                    }
-                })
                 .flatMap(new Function<String, ObservableSource<City>>() {
                     @Override
                     public ObservableSource<City> apply(String s) throws Exception {
@@ -179,16 +161,11 @@ public class WeatherViewModel extends AndroidViewModel {
                                         CityDao cityDao = getDB(mRepositoryManager);
                                         final City exist = cityDao.getCityByLocation();
                                         Log.d(TAG, "getLocation exist = " + exist);
-                                        if (exist != null) {
+                                        if (exist != null && !TextUtils.equals(exist.getAreaId(), city.getAreaId())) {
                                             cityDao.delete(exist);
+                                            cityDao.insert(city);
                                         }
-                                        cityDao.insert(city);
-                                        //如果原来未定位或者定位城市不一样，则刷新
-                                        //if (exist == null || !TextUtils.equals(city.getAreaId(), exist.getAreaId())) {
-                                            return city;
-//                                        } else {
-//                                            return null;
-//                                        }
+                                        return city;
                                     }
                                 });
                     }

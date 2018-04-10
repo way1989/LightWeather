@@ -11,8 +11,6 @@ import com.light.weather.bean.City;
 
 import java.util.List;
 
-import io.reactivex.Flowable;
-
 /**
  * Created by android on 18-1-31.
  */
@@ -24,8 +22,8 @@ public interface CityDao {
     @Query("SELECT count(*) from city")
     public int getCityCount();
 
-    @Query("SELECT * from city ORDER BY orderIndex")
-    public Flowable<List<City>> getCityFromCache();
+//    @Query("SELECT * from city ORDER BY orderIndex")
+//    public Flowable<List<City>> getCityFromCache();
 
     @Query("SELECT * from city where areaId = :areaId")
     public City getCityByAreaId(String areaId);

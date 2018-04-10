@@ -17,23 +17,22 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Toast;
 
+import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.google.gson.GsonBuilder;
+import com.jakewharton.rxbinding2.support.v7.widget.RxSearchView;
 import com.light.weather.BuildConfig;
 import com.light.weather.R;
 import com.light.weather.adapter.SearchAdapter;
 import com.light.weather.bean.City;
 import com.light.weather.bean.HotCity;
 import com.light.weather.bean.SearchItem;
-import com.light.weather.ui.common.WeatherViewModel;
 import com.light.weather.ui.base.BaseActivity;
+import com.light.weather.ui.common.WeatherViewModel;
 import com.light.weather.util.AppConstant;
 import com.light.weather.util.RxSchedulers;
 import com.light.weather.widget.SimpleListDividerDecorator;
-import com.chad.library.adapter.base.BaseQuickAdapter;
-import com.google.gson.GsonBuilder;
-import com.jakewharton.rxbinding2.support.v7.widget.RxSearchView;
-import com.trello.rxlifecycle2.android.ActivityEvent;
-import com.weavey.loading.lib.LoadingLayout;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -45,20 +44,20 @@ import javax.inject.Inject;
 import butterknife.BindView;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Consumer;
+import me.bakumon.statuslayoutmanager.library.StatusLayoutManager;
 
 public class SearchCityActivity extends BaseActivity implements MenuItem.OnActionExpandListener, View.OnTouchListener {
     private static final String TAG = "SearchCityActivity";
     @BindView(R.id.recyclerview)
     RecyclerView mRecyclerView;
-    @BindView(R.id.loading_layout)
-    LoadingLayout mLoadingLayout;
+    @Inject
+    ViewModelProvider.Factory viewModelFactory;
     private SearchAdapter mSearchAdapter;
     private SearchView mSearchView;
     private InputMethodManager mInputMethodManager;
     private List<City> mHotCities;
     private List<SearchItem> mSearchItems;
-    @Inject
-    ViewModelProvider.Factory viewModelFactory;
+    private StatusLayoutManager mStatusLayoutManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +67,11 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
+        mStatusLayoutManager = new StatusLayoutManager.Builder(mRecyclerView)
+                .setDefaultEmptyClickViewVisible(false)
+                .setDefaultErrorClickViewVisible(false)
+                .build();
+
         mSearchItems = new ArrayList<>();
 
         String json = getString(R.string.hot_city_json);
@@ -87,13 +91,14 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
         mSearchAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
-                final City city = mSearchAdapter.getItem(position).t;
+                final City city = (City) view.getTag();
                 SearchCityActivity.this.onItemClick(city);
             }
         });
         mRecyclerView.setAdapter(mSearchAdapter);
         mRecyclerView.addItemDecoration(new SimpleListDividerDecorator(
-                getDrawable(R.drawable.list_divider_h), getDrawable(R.drawable.list_divider_v),false));
+                getDrawable(R.drawable.list_divider_h), getDrawable(R.drawable.list_divider_v), false));
+
     }
 
     private List<SearchItem> getSearchItems(List<City> cities, boolean isHotCity) {
@@ -122,7 +127,7 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
 
         searchMenuItem.setOnActionExpandListener(this);
 
-        RxSearchView.queryTextChanges(mSearchView)
+        mDisposable.add(RxSearchView.queryTextChanges(mSearchView)
                 .debounce(500, TimeUnit.MILLISECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<CharSequence>() {
@@ -130,16 +135,15 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
                     public void accept(CharSequence charSequence) throws Exception {
                         search(charSequence.toString());
                     }
-                });
+                }));
         return super.onCreateOptionsMenu(menu);
     }
 
 
     private void search(String query) {
         if (!TextUtils.isEmpty(query) || !query.trim().equals("")) {
-            mLoadingLayout.setStatus(LoadingLayout.Loading);
-            mViewModel.search(query)
-                    .compose(this.<List<City>>bindUntilEvent(ActivityEvent.DESTROY))
+            mStatusLayoutManager.showLoadingLayout();
+            mDisposable.add(mViewModel.search(query)
                     .compose(RxSchedulers.<List<City>>io_main())
                     .subscribe(new Consumer<List<City>>() {
                         @Override
@@ -152,7 +156,7 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
                             Log.e(TAG, "accept: search city ", throwable);
                             onSearchError(throwable);
                         }
-                    });
+                    }));
         }
     }
 
@@ -173,7 +177,7 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
 
     public void onSearchResult(List<City> cities) {
         Log.d(TAG, "onSearchResult... city size = " + cities.size());
-        mLoadingLayout.setStatus(LoadingLayout.Success);
+        mStatusLayoutManager.showSuccessLayout();
         if (cities.isEmpty()) {
             mSearchItems.clear();
             List<SearchItem> hotSearchItems = getSearchItems(mHotCities, true);
@@ -191,7 +195,7 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
 
     public void onSearchError(Throwable e) {
         Log.d(TAG, "onSearchError... e = " + e.getMessage());
-        mLoadingLayout.setStatus(LoadingLayout.Success);
+        mStatusLayoutManager.showSuccessLayout();
         mSearchItems.clear();
         List<SearchItem> hotSearchItems = getSearchItems(mHotCities, true);
         mSearchItems.addAll(hotSearchItems);
@@ -213,10 +217,12 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
     }
 
     public void onItemClick(final City city) {
-        Log.d(TAG, "onItemClick city = " + city.getCity());
+        Log.d(TAG, "onItemClick city = " + city);
         hideInputManager();
-        mViewModel.addCity(city)
-                .compose(this.<City>bindUntilEvent(ActivityEvent.DESTROY))
+        if (city == null) {
+            Toast.makeText(this, "city is null...", Toast.LENGTH_SHORT).show();
+        }
+        mDisposable.add(mViewModel.addCity(city)
                 .compose(RxSchedulers.<City>io_main())
                 .subscribe(new Consumer<City>() {
                     @Override
@@ -228,7 +234,7 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
                     public void accept(Throwable throwable) throws Exception {
                         Log.e(TAG, "accept: addCity city = " + city, throwable);
                     }
-                });
+                }));
     }
 
     @Override

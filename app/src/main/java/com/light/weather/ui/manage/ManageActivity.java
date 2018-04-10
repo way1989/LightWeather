@@ -24,14 +24,12 @@ import com.light.weather.R;
 import com.light.weather.adapter.ManageAdapter;
 import com.light.weather.bean.City;
 import com.light.weather.bean.HeWeather;
-import com.light.weather.ui.common.WeatherViewModel;
 import com.light.weather.ui.base.BaseActivity;
+import com.light.weather.ui.common.WeatherViewModel;
 import com.light.weather.ui.search.SearchCityActivity;
 import com.light.weather.util.AppConstant;
 import com.light.weather.util.RxSchedulers;
 import com.light.weather.widget.SimpleListDividerDecorator;
-import com.trello.rxlifecycle2.android.ActivityEvent;
-import com.weavey.loading.lib.LoadingLayout;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -43,6 +41,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
+import me.bakumon.statuslayoutmanager.library.StatusLayoutManager;
 
 public class ManageActivity extends BaseActivity {
     public static final String EXTRA_DATA_CHANGED = "extra_data_changed";
@@ -53,14 +52,13 @@ public class ManageActivity extends BaseActivity {
     FloatingActionButton mFab;
     @BindView(R.id.recycler_view)
     RecyclerView mRecyclerView;
-    @BindView(R.id.loading_layout)
-    LoadingLayout mLoadingLayout;
 
     @Inject
     ViewModelProvider.Factory viewModelFactory;
     private ManageAdapter mAdapter;
     private boolean mDataChanged;
     private int mSelectedItem;
+    private StatusLayoutManager mStatusLayoutManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -166,6 +164,10 @@ public class ManageActivity extends BaseActivity {
                 onBackPressed();
             }
         });
+        mStatusLayoutManager = new StatusLayoutManager.Builder(mRecyclerView)
+                .setDefaultEmptyClickViewVisible(false)
+                .setDefaultErrorClickViewVisible(false)
+                .build();
         getCities();
     }
 
@@ -182,8 +184,7 @@ public class ManageActivity extends BaseActivity {
 
     private void onItemSwap() {
         final List<City> data = mAdapter.getData();
-        mViewModel.swapCity(data)
-                .compose(ManageActivity.this.<Boolean>bindUntilEvent(ActivityEvent.DESTROY))
+        mDisposable.add(mViewModel.swapCity(data)
                 .compose(RxSchedulers.<Boolean>io_main())
                 .subscribe(new Consumer<Boolean>() {
                     @Override
@@ -195,12 +196,11 @@ public class ManageActivity extends BaseActivity {
                     public void accept(Throwable throwable) throws Exception {
                         Log.e(TAG, "accept: onItemSwap...", throwable);
                     }
-                });
+                }));
     }
 
     public void onItemRemoved(final City city) {
-        mViewModel.deleteCity(city)
-                .compose(this.<Boolean>bindUntilEvent(ActivityEvent.DESTROY))
+        mDisposable.add(mViewModel.deleteCity(city)
                 .compose(RxSchedulers.<Boolean>io_main())
                 .subscribe(new Consumer<Boolean>() {
                     @Override
@@ -215,7 +215,7 @@ public class ManageActivity extends BaseActivity {
                     public void accept(Throwable throwable) throws Exception {
                         Log.e(TAG, "accept: onItemRemoved...", throwable);
                     }
-                });
+                }));
     }
 
     @Override
@@ -233,7 +233,7 @@ public class ManageActivity extends BaseActivity {
 
     private void getWeather(final City city) {
         Log.i(TAG, "getWeather... city = " + city);
-        mViewModel.getWeather(city, true)
+        mDisposable.add(mViewModel.getWeather(city, true)
                 .map(new Function<HeWeather, City>() {
                     @Override
                     public City apply(HeWeather heWeather) throws Exception {
@@ -251,7 +251,6 @@ public class ManageActivity extends BaseActivity {
                         return city;
                     }
                 })
-                .compose(this.<City>bindUntilEvent(ActivityEvent.DESTROY))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<City>() {
@@ -266,7 +265,7 @@ public class ManageActivity extends BaseActivity {
                     public void accept(Throwable throwable) throws Exception {
                         Log.e(TAG, "getWeather onError: ", throwable);
                     }
-                });
+                }));
 
     }
 
@@ -277,21 +276,20 @@ public class ManageActivity extends BaseActivity {
 
     public void onCityChange(List<City> cities) {
         if (cities != null && cities.size() > 0) {
-            mLoadingLayout.setStatus(LoadingLayout.Success);
+            mStatusLayoutManager.showSuccessLayout();
         } else {
-            mLoadingLayout.setStatus(LoadingLayout.Empty);
+            mStatusLayoutManager.showEmptyLayout();
         }
         mAdapter.setNewData(cities);
     }
 
     public void showLoading() {
-        mLoadingLayout.setStatus(LoadingLayout.Loading);
+        mStatusLayoutManager.showLoadingLayout();
     }
 
     private void getCities() {
         showLoading();
-        mViewModel.getCities()
-                .compose(this.<List<City>>bindUntilEvent(ActivityEvent.DESTROY))
+        mDisposable.add(mViewModel.getCities()
                 .compose(RxSchedulers.<List<City>>io_main())
                 .subscribe(new Consumer<List<City>>() {
                     @Override
@@ -303,7 +301,7 @@ public class ManageActivity extends BaseActivity {
                     public void accept(Throwable throwable) throws Exception {
                         Log.e(TAG, "accept: getCities ", throwable);
                     }
-                });
+                }));
     }
 
 }

@@ -7,7 +7,6 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -19,7 +18,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.light.weather.BuildConfig;
 import com.light.weather.R;
 import com.light.weather.adapter.AqiAdapter;
@@ -28,9 +29,10 @@ import com.light.weather.bean.AqiDetailBean;
 import com.light.weather.bean.City;
 import com.light.weather.bean.HeWeather;
 import com.light.weather.di.Injectable;
-import com.light.weather.ui.common.WeatherViewModel;
 import com.light.weather.ui.base.BaseFragment;
+import com.light.weather.ui.common.WeatherViewModel;
 import com.light.weather.util.FormatUtil;
+import com.light.weather.util.RxSchedulers;
 import com.light.weather.util.ShareUtils;
 import com.light.weather.util.WeatherUtil;
 import com.light.weather.widget.AqiView;
@@ -40,9 +42,7 @@ import com.light.weather.widget.HourlyForecastView;
 import com.light.weather.widget.dynamic.BaseWeatherType;
 import com.light.weather.widget.dynamic.ShortWeatherInfo;
 import com.light.weather.widget.dynamic.TypeUtil;
-import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.tbruyelle.rxpermissions2.RxPermissions;
-import com.trello.rxlifecycle2.android.FragmentEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +61,7 @@ import io.reactivex.schedulers.Schedulers;
  * Created by android on 16-11-10.
  */
 
-public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.OnRefreshListener, Injectable{
+public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.OnRefreshListener, Injectable {
     private static final String TAG = "WeatherFragment";
     private static final String ARG_KEY = "city";
     @BindView(R.id.w_dailyForecastView)
@@ -81,15 +81,13 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
 
     @BindView(R.id.aqi_recyclerview)
     RecyclerView mAqiRecyclerView;
-
+    @Inject
+    ViewModelProvider.Factory viewModelFactory;
     private OnDrawerTypeChangeListener mListener;
     private City mCity;
     private HeWeather mWeather;
     private SuggestionAdapter mSuggestionAdapter;
     private AqiAdapter mAqiAdapter;
-
-    @Inject
-    ViewModelProvider.Factory viewModelFactory;
 
     public static WeatherFragment makeInstance(@NonNull City city) {
         WeatherFragment fragment = new WeatherFragment();
@@ -101,8 +99,8 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
         mViewModel = ViewModelProviders.of(this, viewModelFactory).get(WeatherViewModel.class);
+        super.onActivityCreated(savedInstanceState);
     }
 
     @Override
@@ -187,11 +185,10 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
     }
 
     public void onLocationChange(City city) {
+        if (!TextUtils.equals(mCity.getAreaId(), city.getAreaId())) {
+            mListener.onLocationChange(city);
+        }
         if (getUserVisibleHint()) {
-            if (!TextUtils.equals(mCity.getAreaId(), city.getAreaId())
-                    || !TextUtils.equals(mCity.getCity(), city.getCity())) {
-                mListener.onLocationChange(city);
-            }
             mCity = city;
             getWeather(city, true);
         }
@@ -209,23 +206,23 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
             Log.e(TAG, "loadDataFirstTime: ", new Throwable("something is null..."));
             return;
         }
-        if (mCity.getIsLocation() == 1 /*&& TextUtils.isEmpty(mCity.getAreaId())*/) {
-            getLocation();
-        } else {
+        if (!TextUtils.isEmpty(mCity.getAreaId())) {
             getWeather(mCity, false);
+        }
+        if (mCity.getIsLocation() == 1) {
+            getLocation();
         }
     }
 
     private void getWeather(City city, boolean force) {
         Log.i(TAG, "getWeather... city = " + city + ", areaId = " + city.getAreaId());
-        mViewModel.getWeather(city, force)
+        mDisposable.add(mViewModel.getWeather(city, force)
                 .doOnSubscribe(new Consumer<Disposable>() {
                     @Override
                     public void accept(Disposable disposable) throws Exception {
                         updateRefreshStatus(true);
                     }
                 })
-                .compose(this.<HeWeather>bindUntilEvent(FragmentEvent.DESTROY_VIEW))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<HeWeather>() {
@@ -241,7 +238,7 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
                         updateRefreshStatus(false);
                         showErrorTip(throwable.getMessage());
                     }
-                });
+                }));
 
     }
 
@@ -281,20 +278,13 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
             });
     }
 
-    private void onMenuItemClick(MenuItem menuItem) {
-        switch (menuItem.getItemId()) {
-            case R.id.action_share:
-                Log.d(TAG, "onMenuItemClick: id = share... isVisible = " + getUserVisibleHint());
-                onShareItemClick();
-        }
-    }
-
     @Override
     public void onRefresh() {
-        if (mCity.getIsLocation() == 1 /*&& TextUtils.isEmpty(mCity.getAreaId())*/) {
-            getLocation();
-        } else {
+        if (!TextUtils.isEmpty(mCity.getAreaId())) {
             getWeather(mCity, true);
+        }
+        if (mCity.getIsLocation() == 1) {
+            getLocation();
         }
     }
 
@@ -309,10 +299,6 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
 
     @Override
     public void setUserVisibleHint(boolean isVisibleToUser) {
-        if (!isVisibleToUser && mIsDataInitiated) {
-            mIsDataInitiated = !(mWeather == null || !mWeather.isOK()
-                    || (System.currentTimeMillis() - mWeather.getUpdateTime() > 30 * 60 * 1000));
-        }
         super.setUserVisibleHint(isVisibleToUser);
         changeDynamicWeather(mWeather);
     }
@@ -468,12 +454,13 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
     }
 
     protected void toast(String msg) {
-        Snackbar.make(mWPullRefreshLayout, msg, Snackbar.LENGTH_SHORT).show();
+        //Snackbar.make(mWPullRefreshLayout, msg, Snackbar.LENGTH_SHORT).show();
+        Toast.makeText(getContext(), msg, Toast.LENGTH_LONG).show();
     }
 
     private void getLocation() {
         Log.d(TAG, "getLocation: start...");
-        new RxPermissions(getActivity())
+        mDisposable.add(new RxPermissions(getActivity())
                 .request(Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.ACCESS_COARSE_LOCATION)
                 .observeOn(AndroidSchedulers.mainThread())
@@ -488,28 +475,26 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
                 })
                 .doOnSubscribe(new Consumer<Disposable>() {
                     @Override
-                    public void accept(Disposable disposable) throws Exception {
+                    public void accept(Disposable disposable) {
                         updateRefreshStatus(true);
                     }
                 })
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                //.compose(RxSchedulers.<City>io_main())
-                .compose(WeatherFragment.this.<City>bindUntilEvent(FragmentEvent.DESTROY))
+                .compose(RxSchedulers.<City>io_main())
                 .subscribe(new Consumer<City>() {
                     @Override
-                    public void accept(City city) throws Exception {
+                    public void accept(City city) {
                         Log.d(TAG, "requestLocation: onNext city = " + city);
-                        onLocationChange(city);
+                        if (!TextUtils.equals(city.getAreaId(), mCity.getAreaId()))
+                            onLocationChange(city);
                     }
                 }, new Consumer<Throwable>() {
                     @Override
-                    public void accept(Throwable throwable) throws Exception {
+                    public void accept(Throwable throwable) {
                         Log.e(TAG, "requestLocation: onError ", throwable);
                         updateRefreshStatus(false);
                         showErrorTip(throwable.getMessage());
                     }
-                });
+                }));
     }
 
     public interface OnDrawerTypeChangeListener {
