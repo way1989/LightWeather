@@ -31,12 +31,12 @@ public class App extends Application implements HasActivityInjector {
         SQLiteOnWeb.init(this).start();
         AppInjector.init(this);
 
-        if (BuildConfig.DEBUG) {
-            StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
-                    .detectAll().penaltyDeath().build());
-            StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
-                    .detectAll().penaltyDeath().build());
-        }
+//        if (BuildConfig.DEBUG) {
+//            StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+//                    .detectAll().penaltyDeath().build());
+//            StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+//                    .detectAll().penaltyDeath().build());
+//        }
     }
 
     @Override

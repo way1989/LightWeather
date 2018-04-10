@@ -106,9 +106,9 @@ dependencies {
     annotationProcessor "com.google.dagger:dagger-android-processor:$rootProject.daggerVersion"
 
     //leakcanary
-    debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.5.4'
-    releaseImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.4'
-    testImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.4'
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.5.3'
+    releaseImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.3'
+    testImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.3'
 
     //sqliteonweb
     debugImplementation 'io.github.skyhacker2:sqliteonweb:1.0.2'

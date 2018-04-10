@@ -71,7 +71,7 @@ public class MainActivity extends BaseActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTheme(R.style.AppTheme_NoActionBar);
+        //setTheme(R.style.AppTheme_NoActionBar);
         mViewModel = ViewModelProviders.of(this, viewModelFactory).get(WeatherViewModel.class);
 
 //        getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);

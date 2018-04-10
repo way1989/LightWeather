@@ -161,10 +161,10 @@ public class WeatherViewModel extends AndroidViewModel {
                                         CityDao cityDao = getDB(mRepositoryManager);
                                         final City exist = cityDao.getCityByLocation();
                                         Log.d(TAG, "getLocation exist = " + exist);
-                                        if (exist != null) {
+                                        if (exist == null) {
+                                            cityDao.insert(city);
+                                        } else if (!TextUtils.equals(exist.getAreaId(), city.getAreaId())) {
                                             cityDao.delete(exist);
-                                        }
-                                        if (exist == null || !TextUtils.equals(exist.getAreaId(), city.getAreaId())) {
                                             cityDao.insert(city);
                                         }
                                         return city;
