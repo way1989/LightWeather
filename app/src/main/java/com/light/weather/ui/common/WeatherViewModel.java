@@ -142,7 +142,7 @@ public class WeatherViewModel extends AndroidViewModel {
     }
 
     public Observable<City> getLocation() {
-        return new RxLocation(getApplication())
+        return RxLocation.getInstance(getApplication())
 //                .timeout(TIMEOUT_DURATION, TimeUnit.SECONDS)
                 .observeOn(Schedulers.io())
                 .flatMap(new Function<String, ObservableSource<City>>() {
@@ -161,8 +161,10 @@ public class WeatherViewModel extends AndroidViewModel {
                                         CityDao cityDao = getDB(mRepositoryManager);
                                         final City exist = cityDao.getCityByLocation();
                                         Log.d(TAG, "getLocation exist = " + exist);
-                                        if (exist != null && !TextUtils.equals(exist.getAreaId(), city.getAreaId())) {
+                                        if (exist != null) {
                                             cityDao.delete(exist);
+                                        }
+                                        if (exist == null || !TextUtils.equals(exist.getAreaId(), city.getAreaId())) {
                                             cityDao.insert(city);
                                         }
                                         return city;

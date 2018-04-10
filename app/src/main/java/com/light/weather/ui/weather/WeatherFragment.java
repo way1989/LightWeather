@@ -42,6 +42,7 @@ import com.light.weather.widget.HourlyForecastView;
 import com.light.weather.widget.dynamic.BaseWeatherType;
 import com.light.weather.widget.dynamic.ShortWeatherInfo;
 import com.light.weather.widget.dynamic.TypeUtil;
+import com.tbruyelle.rxpermissions2.Permission;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import java.util.ArrayList;
@@ -461,13 +462,13 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
     private void getLocation() {
         Log.d(TAG, "getLocation: start...");
         mDisposable.add(new RxPermissions(getActivity())
-                .request(Manifest.permission.ACCESS_FINE_LOCATION,
+                .requestEachCombined(Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.ACCESS_COARSE_LOCATION)
                 .observeOn(AndroidSchedulers.mainThread())
-                .flatMap(new Function<Boolean, ObservableSource<City>>() {
+                .concatMap(new Function<Permission, ObservableSource<City>>() {
                     @Override
-                    public ObservableSource<City> apply(Boolean granted) throws Exception {
-                        if (!granted) {
+                    public ObservableSource<City> apply(Permission permission) throws Exception {
+                        if (!permission.granted) {
                             throw new Exception(getString(R.string.permission_message));
                         }
                         return mViewModel.getLocation();

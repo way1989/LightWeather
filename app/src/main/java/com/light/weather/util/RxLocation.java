@@ -18,19 +18,33 @@ import io.reactivex.android.MainThreadDisposable;
 
 public class RxLocation extends Observable<String> {
     private static final String TAG = "RxLocation";
-    private AMapLocationClient mLocationClient;
+    private static volatile RxLocation sInstance;
+    private Application mApplication;
 
-    public RxLocation(Application application) {
-        mLocationClient = new AMapLocationClient(application);
-        mLocationClient.setLocationOption(getAMapLocationClientOption());
+    private RxLocation(Application application) {
+        mApplication = application;
+    }
+
+    public static RxLocation getInstance(Application application) {
+        if (sInstance == null) {
+            synchronized (RxLocation.class) {
+                if (sInstance == null) {
+                    sInstance = new RxLocation(application);
+                }
+            }
+        }
+        return sInstance;
     }
 
     @Override
     protected void subscribeActual(Observer<? super String> observer) {
-        Listener listener = new Listener(mLocationClient, observer);
+        final AMapLocationClient locationClient = new AMapLocationClient(mApplication);
+        locationClient.setLocationOption(getAMapLocationClientOption());
+
+        final Listener listener = new Listener(locationClient, observer);
         observer.onSubscribe(listener);
-        mLocationClient.setLocationListener(listener);
-        mLocationClient.startLocation();
+        locationClient.setLocationListener(listener);
+        locationClient.startLocation();
         Log.d(TAG, "subscribeActual: startLocation...");
     }
 
