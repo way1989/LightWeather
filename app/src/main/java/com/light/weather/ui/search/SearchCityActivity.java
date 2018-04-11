@@ -20,13 +20,11 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
-import com.google.gson.GsonBuilder;
 import com.jakewharton.rxbinding2.support.v7.widget.RxSearchView;
 import com.light.weather.BuildConfig;
 import com.light.weather.R;
 import com.light.weather.adapter.SearchAdapter;
 import com.light.weather.bean.City;
-import com.light.weather.bean.HotCity;
 import com.light.weather.bean.SearchItem;
 import com.light.weather.ui.base.BaseActivity;
 import com.light.weather.ui.common.WeatherViewModel;
@@ -34,7 +32,6 @@ import com.light.weather.util.AppConstant;
 import com.light.weather.util.RxSchedulers;
 import com.light.weather.widget.SimpleListDividerDecorator;
 
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -42,8 +39,10 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 import butterknife.BindView;
+import io.reactivex.ObservableSource;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 import me.bakumon.statuslayoutmanager.library.StatusLayoutManager;
 
 public class SearchCityActivity extends BaseActivity implements MenuItem.OnActionExpandListener, View.OnTouchListener {
@@ -54,9 +53,7 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
     ViewModelProvider.Factory viewModelFactory;
     private SearchAdapter mSearchAdapter;
     private SearchView mSearchView;
-    private InputMethodManager mInputMethodManager;
-    private List<City> mHotCities;
-    private List<SearchItem> mSearchItems;
+    private List<SearchItem> mDefaultItems;
     private StatusLayoutManager mStatusLayoutManager;
 
     @Override
@@ -72,21 +69,9 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
                 .setDefaultErrorClickViewVisible(false)
                 .build();
 
-        mSearchItems = new ArrayList<>();
-
-        String json = getString(R.string.hot_city_json);
-        HotCity hotCity = new GsonBuilder()
-                .excludeFieldsWithModifiers(Modifier.PROTECTED)//忽略protected字段
-                .create().fromJson(json, HotCity.class);
-        mHotCities = hotCity.getCities();
-        Log.d(TAG, "onCreate: getHotCity = " + mHotCities);
-        List<SearchItem> searchItems = getSearchItems(mHotCities, true);
-        mSearchItems.addAll(searchItems);
-
-        mInputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         mRecyclerView.setLayoutManager(new GridLayoutManager(this, 3));
         mRecyclerView.setOnTouchListener(this);
-        mSearchAdapter = new SearchAdapter(R.layout.item_search_city, R.layout.item_search_head, mSearchItems);
+        mSearchAdapter = new SearchAdapter(R.layout.item_search_city, R.layout.item_search_head, null);
         //mSearchAdapter.openLoadAnimation(BaseQuickAdapter.ALPHAIN);
         mSearchAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
             @Override
@@ -99,11 +84,31 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
         mRecyclerView.addItemDecoration(new SimpleListDividerDecorator(
                 getDrawable(R.drawable.list_divider_h), getDrawable(R.drawable.list_divider_v), false));
 
+        loadDefaultCities();
     }
 
-    private List<SearchItem> getSearchItems(List<City> cities, boolean isHotCity) {
+    private void loadDefaultCities() {
+        mStatusLayoutManager.showLoadingLayout();
+        mDisposable.add(mViewModel.getDefaultCities()
+                .compose(RxSchedulers.<List<SearchItem>>io_main())
+                .subscribe(new Consumer<List<SearchItem>>() {
+                    @Override
+                    public void accept(List<SearchItem> searchItems) throws Exception {
+                        mDefaultItems = searchItems;
+                        mSearchAdapter.setNewData(mDefaultItems);
+                        mStatusLayoutManager.showSuccessLayout();
+                    }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Exception {
+                        Toast.makeText(getApplicationContext(), throwable.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                }));
+    }
+
+    private List<SearchItem> getSearchItems(List<City> cities) {
         List<SearchItem> searchItems = new ArrayList<>();
-        SearchItem searchItem = new SearchItem(true, isHotCity ? "热门城市:" : "搜索结果:");
+        SearchItem searchItem = new SearchItem(true, getString(R.string.search_city_title));
         searchItems.add(searchItem);
         for (City city : cities)
             searchItems.add(new SearchItem(city));
@@ -157,49 +162,35 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
                             onSearchError(throwable);
                         }
                     }));
+        } else {
+            onSearchResult(null);
         }
     }
 
-    @Override
-    public boolean onTouch(View v, MotionEvent event) {
-        hideInputManager();
-        return false;
-    }
-
     public void hideInputManager() {
+        InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (inputMethodManager != null) {
+            inputMethodManager.hideSoftInputFromWindow(mSearchView.getWindowToken(), 0);
+        }
         if (mSearchView != null) {
-            if (mInputMethodManager != null) {
-                mInputMethodManager.hideSoftInputFromWindow(mSearchView.getWindowToken(), 0);
-            }
             mSearchView.clearFocus();
         }
     }
 
     public void onSearchResult(List<City> cities) {
-        Log.d(TAG, "onSearchResult... city size = " + cities.size());
+        Log.d(TAG, "onSearchResult... cities = " + cities);
         mStatusLayoutManager.showSuccessLayout();
-        if (cities.isEmpty()) {
-            mSearchItems.clear();
-            List<SearchItem> hotSearchItems = getSearchItems(mHotCities, true);
-            mSearchItems.addAll(hotSearchItems);
-            mSearchAdapter.setNewData(mSearchItems);
+        if (cities == null || cities.isEmpty()) {
+            mSearchAdapter.setNewData(mDefaultItems);
         } else {
-            mSearchItems.clear();
-            List<SearchItem> hotSearchItems = getSearchItems(mHotCities, true);
-            List<SearchItem> searchItems = getSearchItems(cities, false);
-            mSearchItems.addAll(searchItems);
-            mSearchItems.addAll(hotSearchItems);
-            mSearchAdapter.setNewData(mSearchItems);
+            mSearchAdapter.setNewData(getSearchItems(cities));
         }
     }
 
     public void onSearchError(Throwable e) {
         Log.d(TAG, "onSearchError... e = " + e.getMessage());
         mStatusLayoutManager.showSuccessLayout();
-        mSearchItems.clear();
-        List<SearchItem> hotSearchItems = getSearchItems(mHotCities, true);
-        mSearchItems.addAll(hotSearchItems);
-        mSearchAdapter.setNewData(mSearchItems);
+        mSearchAdapter.setNewData(mDefaultItems);
         if (BuildConfig.LOG_DEBUG)
             Snackbar.make(mRecyclerView, e.getMessage(), Snackbar.LENGTH_LONG).show();
     }
@@ -221,20 +212,47 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
         hideInputManager();
         if (city == null) {
             Toast.makeText(this, "city is null...", Toast.LENGTH_SHORT).show();
+            return;
         }
-        mDisposable.add(mViewModel.addCity(city)
-                .compose(RxSchedulers.<City>io_main())
-                .subscribe(new Consumer<City>() {
-                    @Override
-                    public void accept(City result) throws Exception {
-                        onSaveCitySucceed(result);
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) throws Exception {
-                        Log.e(TAG, "accept: addCity city = " + city, throwable);
-                    }
-                }));
+        if (city.getIsLocation() == 1) {
+            mStatusLayoutManager.showLoadingLayout();
+            mDisposable.add(mViewModel.getLocation()
+                    .concatMap(new Function<City, ObservableSource<List<SearchItem>>>() {
+                        @Override
+                        public ObservableSource<List<SearchItem>> apply(City city) throws Exception {
+                            return mViewModel.getDefaultCities();
+                        }
+                    })
+                    .compose(RxSchedulers.<List<SearchItem>>io_main())
+                    .subscribe(new Consumer<List<SearchItem>>() {
+                        @Override
+                        public void accept(List<SearchItem> searchItems) throws Exception {
+                            mDefaultItems = searchItems;
+                            mSearchAdapter.setNewData(mDefaultItems);
+                            mStatusLayoutManager.showSuccessLayout();
+                        }
+                    }, new Consumer<Throwable>() {
+                        @Override
+                        public void accept(Throwable throwable) throws Exception {
+                            Toast.makeText(getApplicationContext(), throwable.toString(), Toast.LENGTH_SHORT).show();
+                        }
+                    }));
+        } else {
+            mDisposable.add(mViewModel.addCity(city)
+                    .compose(RxSchedulers.<City>io_main())
+                    .subscribe(new Consumer<City>() {
+                        @Override
+                        public void accept(City result) throws Exception {
+                            onSaveCitySucceed(result);
+                        }
+                    }, new Consumer<Throwable>() {
+                        @Override
+                        public void accept(Throwable throwable) throws Exception {
+                            Log.e(TAG, "accept: addCity city = " + city, throwable);
+                            Toast.makeText(getApplicationContext(), R.string.city_exist, Toast.LENGTH_SHORT).show();
+                        }
+                    }));
+        }
     }
 
     @Override
@@ -248,4 +266,9 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
         return true;
     }
 
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        hideInputManager();
+        return false;
+    }
 }

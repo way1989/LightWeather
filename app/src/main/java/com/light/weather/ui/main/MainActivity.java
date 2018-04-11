@@ -14,16 +14,13 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.jakewharton.rxbinding2.support.v7.widget.RxToolbar;
 import com.light.weather.R;
 import com.light.weather.bean.City;
 import com.light.weather.ui.base.BaseActivity;
-import com.light.weather.ui.base.BaseFragment;
 import com.light.weather.ui.common.WeatherViewModel;
 import com.light.weather.ui.manage.ManageActivity;
 import com.light.weather.ui.weather.WeatherFragment;
@@ -48,8 +45,8 @@ import io.reactivex.functions.Consumer;
 
 public class MainActivity extends BaseActivity
         implements WeatherFragment.OnDrawerTypeChangeListener, HasSupportFragmentInjector {
-    private static final String TAG = "MainActivity";
     public static final String UNKNOWN_CITY = "unknown";
+    private static final String TAG = "MainActivity";
     private static final int REQUEST_CODE_CITY = 0;
     @Inject
     DispatchingAndroidInjector<Fragment> dispatchingAndroidInjector;
@@ -63,11 +60,12 @@ public class MainActivity extends BaseActivity
     AppBarLayout mAppBarLayout;
     @BindView(R.id.indicator_spring)
     SimplePagerIndicator mIndicator;
+    @Inject
+    ViewModelProvider.Factory viewModelFactory;
     private MainFragmentPagerAdapter mAdapter;
     private List<City> mCities = new ArrayList<>();
     private int mSelectItem = 0;
-    @Inject
-    ViewModelProvider.Factory viewModelFactory;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -156,8 +154,8 @@ public class MainActivity extends BaseActivity
         mCities = cities;
         if (mCities != null && !mCities.isEmpty()) {
             mAdapter.setNewData(mCities);
-            mMainViewPager.setAdapter(mAdapter);
-            mMainViewPager.setOffscreenPageLimit(mAdapter.getCount() - 1);
+            //mMainViewPager.setAdapter(mAdapter);
+            //mMainViewPager.setOffscreenPageLimit(mAdapter.getCount() - 1);
             if (mSelectItem >= 0 && mSelectItem < mAdapter.getCount()) {
                 mMainViewPager.setCurrentItem(mSelectItem);
                 mIndicator.notifyDataSetChanged();
@@ -172,7 +170,7 @@ public class MainActivity extends BaseActivity
                 .compose(RxSchedulers.<List<City>>io_main())
                 .subscribe(new Consumer<List<City>>() {
                     @Override
-                    public void accept(List<City> cities) throws Exception {
+                    public void accept(List<City> cities) {
                         Log.d(TAG, "getCities onNext: cities = " + cities.size());
                         onCityChange(cities);
                     }
@@ -213,9 +211,8 @@ public class MainActivity extends BaseActivity
 
     public static class MainFragmentPagerAdapter extends FragmentPagerAdapter {
         private FragmentManager mFragmentManager;
-        private List<BaseFragment> mFragments;
+        private List<Fragment> mFragments;
         private List<String> mTitles;
-        private BaseFragment mCurrentFragment;
 
         MainFragmentPagerAdapter(FragmentManager fragmentManager) {
             super(fragmentManager);
@@ -236,7 +233,7 @@ public class MainActivity extends BaseActivity
             mFragments.clear();
             mTitles.clear();
             for (City city : cities) {
-                Log.i(TAG, "city = " + city.getCity());
+                Log.i(TAG, "setNewData: city = " + city.getCity());
                 mFragments.add(WeatherFragment.makeInstance(city));
                 mTitles.add(TextUtils.isEmpty(city.getCity()) ? UNKNOWN_CITY : city.getCity());
             }
@@ -244,8 +241,8 @@ public class MainActivity extends BaseActivity
         }
 
         @Override
-        public BaseFragment getItem(int position) {
-            BaseFragment fragment = mFragments.get(position);
+        public Fragment getItem(int position) {
+            Fragment fragment = mFragments.get(position);
             fragment.setRetainInstance(true);
             return fragment;
         }
@@ -270,17 +267,12 @@ public class MainActivity extends BaseActivity
         @Override
         public void setPrimaryItem(ViewGroup container, int position, Object object) {
             super.setPrimaryItem(container, position, object);
-            mCurrentFragment = (BaseFragment) object;
         }
 
         @Override
         public int getItemPosition(@NonNull Object object) {
             return super.getItemPosition(object);
 //            return POSITION_NONE;
-        }
-
-        BaseFragment getCurrentFragment() {
-            return mCurrentFragment;
         }
 
         void replace(int index, String city) {

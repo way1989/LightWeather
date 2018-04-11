@@ -64,6 +64,7 @@ import io.reactivex.schedulers.Schedulers;
 
 public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.OnRefreshListener, Injectable {
     private static final String TAG = "WeatherFragment";
+    private static final long WEATHER_DIRTY_TIME = 30 * 60 * 1000L;
     private static final String ARG_KEY = "city";
     @BindView(R.id.w_dailyForecastView)
     DailyForecastView mWDailyForecastView;
@@ -143,9 +144,15 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
     @Override
     public void onResume() {
         super.onResume();
-//        if (mWeather == null || !DeviceUtil.hasInternet(getContext()))
-//            return;
-//        mPresenter.getWeather(mCity.getAreaId(), true);
+        Log.i(TAG, "onResume: .........");
+        if (getUserVisibleHint() && isDataDirty() && mCity != null) {
+            Log.i(TAG, "onResume: city = " + mCity.getCity()
+                    + ", isDirty = " + isDataDirty());
+            getWeather(mCity, true);
+            if (mCity.getIsLocation() == 1) {
+                getLocation();
+            }
+        }
     }
 
     private City getArgCity() {
@@ -160,7 +167,7 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
     public void onShareItemClick() {
         if (getUserVisibleHint() && mWeather != null && mWeather.isOK()) {
             final String shareInfo = WeatherUtil.getInstance().getShareMessage(mWeather);
-            ShareUtils.shareText(getActivity(), shareInfo, "分享到");
+            ShareUtils.shareText(getContext(), shareInfo, getString(R.string.action_share));
             mWWeatherScrollView.scrollTo(0, 0);
 //            RxImage.saveText2ImageObservable(mWWeatherScrollView)
 //                    .compose(RxSchedulers.<File>io_main())
@@ -202,6 +209,7 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
 
     @Override
     public void loadDataFirstTime() {
+        Log.d(TAG, "loadDataFirstTime: .............");
         if (getActivity() == null || mCity == null) {
             showErrorTip("city is null");
             Log.e(TAG, "loadDataFirstTime: ", new Throwable("something is null..."));
@@ -213,6 +221,15 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
         if (mCity.getIsLocation() == 1) {
             getLocation();
         }
+    }
+
+    @Override
+    public boolean isDataDirty() {
+        final boolean isDirty = mCity != null && !TextUtils.isEmpty(mCity.getAreaId())
+                && mWeather != null && mWeather.isOK()
+                && (System.currentTimeMillis() - mWeather.getUpdateTime() > WEATHER_DIRTY_TIME);
+        //Log.i(TAG, "isDataDirty: " + isDirty);
+        return isDirty;
     }
 
     private void getWeather(City city, boolean force) {
@@ -228,16 +245,16 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<HeWeather>() {
                     @Override
-                    public void accept(HeWeather heWeather) throws Exception {
+                    public void accept(HeWeather heWeather) {
                         Log.d(TAG, "getWeather: onNext weather isOK = " + heWeather.isOK());
                         onWeatherChange(heWeather);
                     }
                 }, new Consumer<Throwable>() {
                     @Override
-                    public void accept(Throwable throwable) throws Exception {
+                    public void accept(Throwable throwable) {
                         Log.e(TAG, "getWeather onError: ", throwable);
                         updateRefreshStatus(false);
-                        showErrorTip(throwable.getMessage());
+                        showErrorTip(throwable.toString());
                     }
                 }));
 
@@ -378,7 +395,7 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
                 setTextViewString(R.id.w_now_cond_text, w.getNow().getCond().getTxt());
 //                mRootView.findViewById(R.id.air_quality_item).setVisibility(View.GONE);
             }
-            setSuggesstion(weather);
+            setSuggestion(weather);
 //            if (w.getSuggestion() != null) {
 //                setTextViewString(R.id.w_suggestion_comf, w.getSuggestion().getComf().getTxt());
 //                setTextViewString(R.id.w_suggestion_cw, w.getSuggestion().getCw().getTxt());
@@ -420,7 +437,7 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
         mAqiAdapter.setNewData(list);
     }
 
-    private void setSuggesstion(HeWeather weather) {
+    private void setSuggestion(HeWeather weather) {
         mSuggestionAdapter.setNewData(WeatherUtil.getSuggestion(weather));
     }
 
@@ -493,7 +510,7 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
                     public void accept(Throwable throwable) {
                         Log.e(TAG, "requestLocation: onError ", throwable);
                         updateRefreshStatus(false);
-                        showErrorTip(throwable.getMessage());
+                        showErrorTip(throwable.toString());
                     }
                 }));
     }

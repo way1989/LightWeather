@@ -24,6 +24,7 @@ public class ManageAdapter extends BaseItemDraggableAdapter<City, BaseViewHolder
 
     @Override
     protected void convert(BaseViewHolder helper, City item) {
+        helper.addOnClickListener(R.id.content).addOnClickListener(R.id.right);
         TextView tvName = helper.getView(android.R.id.text1);
         TextView tvWeather = helper.getView(android.R.id.text2);
         ImageView tvIcon = helper.getView(android.R.id.icon);

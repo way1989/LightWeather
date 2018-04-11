@@ -189,7 +189,7 @@ public class DynamicWeatherView extends TextureView implements TextureView.Surfa
                     weatherType.onDrawElements(canvas);
                     holder.unlockCanvasAndPost(canvas);
                     final long drawTime = AnimationUtils.currentAnimationTimeMillis() - startTime;
-                    final long needSleepTime = 16 - drawTime;
+                    final long needSleepTime = 32 - drawTime;
                     if (needSleepTime > 0) {
                         SystemClock.sleep(needSleepTime);
                     }

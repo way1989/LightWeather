@@ -227,5 +227,10 @@
     }
   ]
 }"</string>
+    <string name="hot_city_title">Hot cities:</string>
+    <string name="location_city_title">Location city:</string>
+    <string name="search_city_title">Search results:</string>
+    <string name="request_location">(Relocation)</string>
+    <string name="delete">Delete</string>
 
 </resources>

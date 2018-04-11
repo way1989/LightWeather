@@ -51,12 +51,12 @@ public abstract class BaseWeatherType implements WeatherHandler {
     public void end() {
         if (mStartAnimatorSet != null) {
             mStartAnimatorSet.removeAllListeners();
-            mStartAnimatorSet.end();
+            mStartAnimatorSet.cancel();
         }
 
         if (mEndAnimatorSet != null) {
             mEndAnimatorSet.removeAllListeners();
-            mEndAnimatorSet.end();
+            mEndAnimatorSet.cancel();
         }
     }
     public void setWeatherColor(int weatherColor) {

@@ -3,7 +3,6 @@ package com.light.weather.ui.manage;
 import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
-import android.graphics.Canvas;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -18,7 +17,6 @@ import android.view.View;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.callback.ItemDragAndSwipeCallback;
 import com.chad.library.adapter.base.listener.OnItemDragListener;
-import com.chad.library.adapter.base.listener.OnItemSwipeListener;
 import com.jakewharton.rxbinding2.view.RxView;
 import com.light.weather.R;
 import com.light.weather.adapter.ManageAdapter;
@@ -68,7 +66,7 @@ public class ManageActivity extends BaseActivity {
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
-        RxView.clicks(mFab)
+        mDisposable.add(RxView.clicks(mFab)
                 .throttleFirst(1, TimeUnit.SECONDS)
                 .subscribe(new Consumer<Object>() {
                     @Override
@@ -76,7 +74,7 @@ public class ManageActivity extends BaseActivity {
                         startActivityForResult(new Intent(ManageActivity.this,
                                 SearchCityActivity.class), REQUEST_CODE_CITY);
                     }
-                });
+                }));
         mAdapter = new ManageAdapter(R.layout.item_manage_city, null);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
         mRecyclerView.addItemDecoration(new SimpleListDividerDecorator(ContextCompat
@@ -130,40 +128,25 @@ public class ManageActivity extends BaseActivity {
             }
         });
 
-        // 开启滑动删除
-        mAdapter.enableSwipeItem();
-        mAdapter.setOnItemSwipeListener(new OnItemSwipeListener() {
+        mAdapter.setOnItemChildClickListener(new BaseQuickAdapter.OnItemChildClickListener() {
             @Override
-            public void onItemSwipeStart(RecyclerView.ViewHolder viewHolder, int pos) {
-
-            }
-
-            @Override
-            public void clearView(RecyclerView.ViewHolder viewHolder, int pos) {
-
-            }
-
-            @Override
-            public void onItemSwiped(RecyclerView.ViewHolder viewHolder, int pos) {
-                City city = mAdapter.getItem(pos);
-                mDataChanged = true;
-                onItemRemoved(city);
-            }
-
-            @Override
-            public void onItemSwipeMoving(Canvas canvas, RecyclerView.ViewHolder viewHolder, float dX, float dY, boolean isCurrentlyActive) {
-
+            public void onItemChildClick(BaseQuickAdapter adapter, View view, int position) {
+                City city = mAdapter.getItem(position);
+                Log.d(TAG, "onItemClick: city = " + city);
+                switch (view.getId()) {
+                    case R.id.content:
+                        mSelectedItem = position;
+                        onBackPressed();
+                        break;
+                    case R.id.right:
+                        mDataChanged = true;
+                        mAdapter.remove(position);
+                        onItemRemoved(city);
+                        break;
+                }
             }
         });
 
-        mAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
-            @Override
-            public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
-                Log.d(TAG, "onItemClick: city = " + mAdapter.getItem(position));
-                mSelectedItem = position;
-                onBackPressed();
-            }
-        });
         mStatusLayoutManager = new StatusLayoutManager.Builder(mRecyclerView)
                 .setDefaultEmptyClickViewVisible(false)
                 .setDefaultErrorClickViewVisible(false)
@@ -283,12 +266,8 @@ public class ManageActivity extends BaseActivity {
         mAdapter.setNewData(cities);
     }
 
-    public void showLoading() {
-        mStatusLayoutManager.showLoadingLayout();
-    }
-
     private void getCities() {
-        showLoading();
+        mStatusLayoutManager.showLoadingLayout();
         mDisposable.add(mViewModel.getCities()
                 .compose(RxSchedulers.<List<City>>io_main())
                 .subscribe(new Consumer<List<City>>() {

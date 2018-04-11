@@ -5,6 +5,7 @@ import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,7 +20,7 @@ import io.reactivex.disposables.CompositeDisposable;
  */
 
 public abstract class BaseFragment extends Fragment {
-
+    private static final String TAG = "BaseFragment";
     protected View mRootView;
     protected boolean mIsDataInitiated;
     protected boolean mIsViewInitiated;
@@ -29,6 +30,7 @@ public abstract class BaseFragment extends Fragment {
     @Override
     public void setUserVisibleHint(boolean isVisibleToUser) {
         super.setUserVisibleHint(isVisibleToUser);
+        Log.i(TAG, "setUserVisibleHint: ...... isVisibleToUser = " + isVisibleToUser);
         if (isVisibleToUser) {
             prepareFetchData();
         }
@@ -37,6 +39,7 @@ public abstract class BaseFragment extends Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        Log.i(TAG, "onActivityCreated: ........");
         mDisposable = new CompositeDisposable();
         mIsViewInitiated = true;
         prepareFetchData();
@@ -44,8 +47,10 @@ public abstract class BaseFragment extends Fragment {
 
     public abstract void loadDataFirstTime();
 
+    public abstract boolean isDataDirty();
+
     private boolean prepareFetchData() {
-        if (getUserVisibleHint() && mIsViewInitiated && !mIsDataInitiated) {
+        if (getUserVisibleHint() && mIsViewInitiated && (!mIsDataInitiated || isDataDirty())) {
             mIsDataInitiated = true;
             loadDataFirstTime();
             return true;
@@ -56,6 +61,7 @@ public abstract class BaseFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        Log.i(TAG, "onCreateView: ............");
         if (mRootView == null)
             mRootView = inflater.inflate(getLayoutId(), container, false);
         ButterKnife.bind(this, mRootView);
@@ -69,6 +75,7 @@ public abstract class BaseFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        Log.i(TAG, "onDestroyView: ................");
         mRootView = null;
         mIsDataInitiated = false;
         mIsViewInitiated = false;

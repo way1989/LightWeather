@@ -6,18 +6,23 @@ import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.google.gson.GsonBuilder;
 import com.light.weather.BuildConfig;
+import com.light.weather.R;
 import com.light.weather.api.ApiService;
 import com.light.weather.api.CacheService;
 import com.light.weather.bean.City;
 import com.light.weather.bean.HeCity;
 import com.light.weather.bean.HeWeather;
+import com.light.weather.bean.HotCity;
+import com.light.weather.bean.SearchItem;
 import com.light.weather.data.IRepositoryManager;
 import com.light.weather.db.CityDao;
 import com.light.weather.db.CityDatabase;
 import com.light.weather.ui.main.MainActivity;
 import com.light.weather.util.RxLocation;
 
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -47,6 +52,33 @@ public class WeatherViewModel extends AndroidViewModel {
     public WeatherViewModel(@NonNull Application application, IRepositoryManager manager) {
         super(application);
         mRepositoryManager = manager;
+    }
+
+    public Observable<List<SearchItem>> getDefaultCities(){
+        return Observable.create(new ObservableOnSubscribe<List<SearchItem>>() {
+            @Override
+            public void subscribe(ObservableEmitter<List<SearchItem>> e) {
+                List<SearchItem> searchItems = new ArrayList<>();
+
+                CityDao cityDao = getDB(mRepositoryManager);
+                final City cityByLocation = cityDao.getCityByLocation();
+                SearchItem locationTitle = new SearchItem(true, getApplication().getString(R.string.location_city_title));
+                searchItems.add(locationTitle);
+                searchItems.add(new SearchItem(cityByLocation));
+
+                String json = getApplication().getString(R.string.hot_city_json);
+                List<City> hotCities = new GsonBuilder()
+                        .excludeFieldsWithModifiers(Modifier.PROTECTED)//忽略protected字段
+                        .create().fromJson(json, HotCity.class).getCities();
+                SearchItem hotTitle = new SearchItem(true, getApplication().getString(R.string.hot_city_title));
+                searchItems.add(hotTitle);
+                for (City city : hotCities) {
+                    searchItems.add(new SearchItem(city));
+                }
+                e.onNext(searchItems);
+                e.onComplete();
+            }
+        });
     }
 
     public Observable<List<City>> search(String query) {
@@ -89,8 +121,12 @@ public class WeatherViewModel extends AndroidViewModel {
                     city.setIndex(cityDao.getCityCount());
                     id = cityDao.insert(city);
                 }
-                e.onNext(!exist && id > 0 ? city : null);
-                e.onComplete();
+                if (!exist && id > 0) {
+                    e.onNext(city);
+                    e.onComplete();
+                } else {
+                    e.onError(new Throwable("city is exist"));
+                }
             }
         });
     }

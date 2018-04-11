@@ -41,6 +41,10 @@ public class SearchAdapter extends BaseSectionQuickAdapter<SearchItem, BaseViewH
         TextView cityName = helper.getView(R.id.city_name_tv);
         TextView cityProv = helper.getView(R.id.city_prov_tv);
         cityName.setText(city.getCity());
-        cityProv.setText(city.getProv());
+        if (city.getIsLocation() == 1) {
+            cityProv.setText(R.string.request_location);
+        } else {
+            cityProv.setText(city.getProv());
+        }
     }
 }
