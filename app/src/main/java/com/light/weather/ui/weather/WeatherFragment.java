@@ -148,10 +148,7 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
         if (getUserVisibleHint() && isDataDirty() && mCity != null) {
             Log.i(TAG, "onResume: city = " + mCity.getCity()
                     + ", isDirty = " + isDataDirty());
-            getWeather(mCity, true);
-            if (mCity.getIsLocation() == 1) {
-                getLocation();
-            }
+            getWeather(mCity, true, mCity.getIsLocation() == 1);
         }
     }
 
@@ -198,7 +195,7 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
         }
         if (getUserVisibleHint()) {
             mCity = city;
-            getWeather(city, true);
+            getWeather(city, true, false);
         }
     }
 
@@ -216,9 +213,8 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
             return;
         }
         if (!TextUtils.isEmpty(mCity.getAreaId())) {
-            getWeather(mCity, false);
-        }
-        if (mCity.getIsLocation() == 1) {
+            getWeather(mCity, false, mCity.getIsLocation() == 1);
+        } else if (mCity.getIsLocation() == 1) {
             getLocation();
         }
     }
@@ -232,22 +228,21 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
         return isDirty;
     }
 
-    private void getWeather(City city, boolean force) {
+    private void getWeather(City city, boolean force, final boolean needLocation) {
         Log.i(TAG, "getWeather... city = " + city + ", areaId = " + city.getAreaId());
+        updateRefreshStatus(true);
         mDisposable.add(mViewModel.getWeather(city, force)
-                .doOnSubscribe(new Consumer<Disposable>() {
-                    @Override
-                    public void accept(Disposable disposable) throws Exception {
-                        updateRefreshStatus(true);
-                    }
-                })
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
+                .compose(RxSchedulers.<HeWeather>io_main())
                 .subscribe(new Consumer<HeWeather>() {
                     @Override
                     public void accept(HeWeather heWeather) {
                         Log.d(TAG, "getWeather: onNext weather isOK = " + heWeather.isOK());
+                        updateRefreshStatus(false);
                         onWeatherChange(heWeather);
+                        Log.d(TAG, "getWeather: doAfterNext needLocation = " + needLocation);
+                        if (needLocation) {
+                            getLocation();
+                        }
                     }
                 }, new Consumer<Throwable>() {
                     @Override
@@ -299,9 +294,8 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
     @Override
     public void onRefresh() {
         if (!TextUtils.isEmpty(mCity.getAreaId())) {
-            getWeather(mCity, true);
-        }
-        if (mCity.getIsLocation() == 1) {
+            getWeather(mCity, true, mCity.getIsLocation() == 1);
+        } else if (mCity.getIsLocation() == 1) {
             getLocation();
         }
     }
@@ -478,9 +472,11 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
 
     private void getLocation() {
         Log.d(TAG, "getLocation: start...");
+        updateRefreshStatus(true);
         mDisposable.add(new RxPermissions(getActivity())
                 .requestEachCombined(Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION)
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 .observeOn(AndroidSchedulers.mainThread())
                 .concatMap(new Function<Permission, ObservableSource<City>>() {
                     @Override
@@ -491,17 +487,12 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
                         return mViewModel.getLocation();
                     }
                 })
-                .doOnSubscribe(new Consumer<Disposable>() {
-                    @Override
-                    public void accept(Disposable disposable) {
-                        updateRefreshStatus(true);
-                    }
-                })
                 .compose(RxSchedulers.<City>io_main())
                 .subscribe(new Consumer<City>() {
                     @Override
                     public void accept(City city) {
                         Log.d(TAG, "requestLocation: onNext city = " + city);
+                        updateRefreshStatus(false);
                         if (!TextUtils.equals(city.getAreaId(), mCity.getAreaId()))
                             onLocationChange(city);
                     }
