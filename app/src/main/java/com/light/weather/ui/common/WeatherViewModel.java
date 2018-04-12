@@ -25,6 +25,7 @@ import com.light.weather.util.RxLocation;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -218,10 +219,10 @@ public class WeatherViewModel extends AndroidViewModel {
                 .searchCity(BuildConfig.HEWEATHER_KEY, query);
     }
 
-    public Observable<HeWeather> getWeather(final City city, boolean force) {
+    public Observable<HeWeather> getWeather(final City city) {
         final ApiService apiService = mRepositoryManager.obtainRetrofitService(ApiService.class);
         final RetryWithDelay retryWithDelay = new RetryWithDelay(3, 3000L);
-        return apiService.getWeather(BuildConfig.HEWEATHER_KEY, city.getAreaId(), LANG)
+        return apiService.getWeather(BuildConfig.HEWEATHER_KEY, city.getAreaId(), Locale.getDefault().getCountry())
                 .timeout(TIMEOUT_DURATION, TimeUnit.SECONDS)
                 .observeOn(Schedulers.io())
                 .doOnNext(new Consumer<HeWeather>() {

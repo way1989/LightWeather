@@ -154,7 +154,7 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
         if (getUserVisibleHint() && isDataDirty() && mCity != null) {
             Log.i(TAG, "onResume: city = " + mCity.getCity()
                     + ", isDirty = " + isDataDirty());
-            getWeather(mCity, true, mCity.getIsLocation() == 1);
+            getWeather(mCity, mCity.getIsLocation() == 1);
         }
     }
 
@@ -174,7 +174,7 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
         }
         if (getUserVisibleHint()) {
             mCity = city;
-            getWeather(city, true, false);
+            getWeather(city, false);
         }
     }
 
@@ -187,7 +187,7 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
             return;
         }
         if (!TextUtils.isEmpty(mCity.getAreaId())) {
-            getWeather(mCity, false, mCity.getIsLocation() == 1);
+            getWeather(mCity, mCity.getIsLocation() == 1);
         } else if (mCity.getIsLocation() == 1) {
             getLocation();
         }
@@ -202,10 +202,10 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
         return isDirty;
     }
 
-    private void getWeather(City city, boolean force, final boolean needLocation) {
+    private void getWeather(City city, final boolean needLocation) {
         Log.i(TAG, "getWeather... city = " + city + ", areaId = " + city.getAreaId());
         updateRefreshStatus(true);
-        mDisposable.add(mViewModel.getWeather(city, force)
+        mDisposable.add(mViewModel.getWeather(city)
                 .compose(RxSchedulers.<HeWeather>io_main())
                 .subscribe(new Consumer<HeWeather>() {
                     @Override
@@ -271,7 +271,7 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
     @Override
     public void onRefresh() {
         if (!TextUtils.isEmpty(mCity.getAreaId())) {
-            getWeather(mCity, true, mCity.getIsLocation() == 1);
+            getWeather(mCity, mCity.getIsLocation() == 1);
         } else if (mCity.getIsLocation() == 1) {
             getLocation();
         }
@@ -333,6 +333,8 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
             }
 
             if (weather.hasAqi()) {
+                mRootView.findViewById(R.id.divider_aqi).setVisibility(View.VISIBLE);
+                mRootView.findViewById(R.id.container_aqi).setVisibility(View.VISIBLE);
                 mWAqiView.setAqi(weather);
                 setAqiDetail(weather);
                 final String qlty = w.getAqi().getCity().getQlty();
@@ -343,9 +345,18 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
                 }
 
             } else {
+                mRootView.findViewById(R.id.divider_aqi).setVisibility(View.GONE);
+                mRootView.findViewById(R.id.container_aqi).setVisibility(View.GONE);
                 setTextViewString(R.id.w_now_cond_text, w.getNow().getCond().getTxt());
             }
-            setSuggestion(weather);
+            if (weather.hasSuggestion()) {
+                mRootView.findViewById(R.id.divider_suggestion).setVisibility(View.VISIBLE);
+                mSuggestionRecyclerView.setVisibility(View.VISIBLE);
+                setSuggestion(weather);
+            } else {
+                mRootView.findViewById(R.id.divider_suggestion).setVisibility(View.GONE);
+                mSuggestionRecyclerView.setVisibility(View.GONE);
+            }
         } catch (Exception e) {
             toast(mCity.getCity() + " Error\n" + e.toString());
         }

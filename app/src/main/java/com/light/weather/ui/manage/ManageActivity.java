@@ -216,7 +216,7 @@ public class ManageActivity extends BaseActivity {
 
     private void getWeather(final City city) {
         Log.i(TAG, "getWeather... city = " + city);
-        mDisposable.add(mViewModel.getWeather(city, true)
+        mDisposable.add(mViewModel.getWeather(city)
                 .map(new Function<HeWeather, City>() {
                     @Override
                     public City apply(HeWeather heWeather) throws Exception {

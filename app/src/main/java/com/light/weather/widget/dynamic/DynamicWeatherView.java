@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.SurfaceTexture;
 import android.os.SystemClock;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.TextureView;
 import android.view.animation.AnimationUtils;
 
@@ -18,7 +19,7 @@ import java.lang.ref.WeakReference;
  */
 
 public class DynamicWeatherView extends TextureView implements TextureView.SurfaceTextureListener {
-
+    private static final String TAG = "DynamicWeatherView";
     private int mFromColor;
     private DrawThread mDrawThread;
     private BaseWeatherType mWeatherType;
@@ -44,6 +45,7 @@ public class DynamicWeatherView extends TextureView implements TextureView.Surfa
     }
 
     public void setType(final BaseWeatherType type) {
+        Log.i(TAG, "setType: mWeatherType = " + mWeatherType);
         if (mWeatherType != null) {
             mWeatherType.end();
             mWeatherType.endAnimation(new AnimatorListenerAdapter() {
@@ -101,36 +103,35 @@ public class DynamicWeatherView extends TextureView implements TextureView.Surfa
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+        Log.i(TAG, "onSurfaceTextureAvailable: ");
         mDrawThread = new DrawThread(this);
         mDrawThread.setWeatherType(mWeatherType);
         mDrawThread.setRunning(true);
         mDrawThread.start();
         mWeatherType.startAnimation(mWeatherType.getWeatherColor());
-
     }
 
     @Override
     public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-
+        Log.i(TAG, "onSurfaceTextureSizeChanged: ");
     }
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+        Log.i(TAG, "onSurfaceTextureDestroyed: ");
         mDrawThread.setRunning(false);
-        setSurfaceTextureListener(null);
         return false;
     }
 
     @Override
     public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-
+        //Log.i(TAG, "onSurfaceTextureUpdated: ");
     }
 
     private static class DrawThread extends Thread {
-
         private final Object mObject = new Object();
-        WeakReference<TextureView> mSurfaceHolderWeakReference;
-        WeakReference<BaseWeatherType> mWeatherTypeWeakReference;
+        private WeakReference<TextureView> mSurfaceHolderWeakReference;
+        private WeakReference<BaseWeatherType> mWeatherTypeWeakReference;
         private boolean mIsRunning = false;
         private boolean mSuspended = false;
 
@@ -146,6 +147,7 @@ public class DynamicWeatherView extends TextureView implements TextureView.Surfa
         }
 
         void setRunning(boolean running) {
+            Log.d(TAG, "setRunning: running = " + running);
             mIsRunning = running;
             if (!running) {
                 synchronized (mObject) {
@@ -155,6 +157,7 @@ public class DynamicWeatherView extends TextureView implements TextureView.Surfa
         }
 
         void setSuspend(boolean suspend) {
+            Log.d(TAG, "setSuspend: suspend = " + suspend);
             this.mSuspended = suspend;
             if (!suspend) {
                 synchronized (mObject) {
@@ -169,7 +172,9 @@ public class DynamicWeatherView extends TextureView implements TextureView.Surfa
                 if (mSuspended) {
                     try {
                         synchronized (mObject) {
+                            Log.d(TAG, "mObject: wait  start...");
                             mObject.wait();
+                            Log.d(TAG, "mObject: wait  end...");
                         }
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -189,7 +194,7 @@ public class DynamicWeatherView extends TextureView implements TextureView.Surfa
                     weatherType.onDrawElements(canvas);
                     holder.unlockCanvasAndPost(canvas);
                     final long drawTime = AnimationUtils.currentAnimationTimeMillis() - startTime;
-                    final long needSleepTime = 32 - drawTime;
+                    final long needSleepTime = 16 - drawTime;
                     if (needSleepTime > 0) {
                         SystemClock.sleep(needSleepTime);
                     }

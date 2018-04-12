@@ -58,6 +58,14 @@ public class HeWeather implements Serializable {
         return false;
     }
 
+    public boolean hasSuggestion() {
+        if (isOK()) {
+            final HeWeather5Bean h = getWeather();
+            return h.getSuggestion() != null && h.getSuggestion().getAir() != null;
+        }
+        return false;
+    }
+
     /**
      * 出错返回-1
      *

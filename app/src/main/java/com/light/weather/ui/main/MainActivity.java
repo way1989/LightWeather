@@ -128,18 +128,21 @@ public class MainActivity extends BaseActivity
     @Override
     protected void onResume() {
         super.onResume();
+        Log.i(TAG, "onResume: ");
         mDynamicWeatherView.onResume();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        Log.i(TAG, "onPause: ");
         mDynamicWeatherView.onPause();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        Log.i(TAG, "onDestroy: ");
         mDynamicWeatherView.onDestroy();
     }
 
