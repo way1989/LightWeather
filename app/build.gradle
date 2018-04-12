@@ -33,9 +33,9 @@ android {
     applicationVariants.all { variant ->//获取 variant 参数，就是 productFlavor x buildType
         variant.outputs.all {
             if(outputFileName.endsWith('-release.apk')) {//变种名以release.apk结尾时才修改名字
-                outputFileName = outputFileName.replace(outputFileName, "MaterialWeather" + "_" + variant.versionName + ".apk")
+                outputFileName = outputFileName.replace(outputFileName, "LightWeather" + "_" + variant.versionName + ".apk")
             } else if (outputFileName.endsWith('-debug.apk')) {
-                outputFileName = outputFileName.replace(outputFileName, "MaterialWeather-debug" + "_" + variant.versionName + ".apk")
+                outputFileName = outputFileName.replace(outputFileName, "LightWeather-debug" + "_" + variant.versionName + ".apk")
             }
         }
     }
