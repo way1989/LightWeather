@@ -18,11 +18,11 @@ public abstract class BaseWeatherType implements WeatherHandler {
     protected static final long END_ANIM_DURATION = 1000L;
     protected int mWeatherColor;
     protected int mDynamicColor;
+    protected AnimatorSet mStartAnimatorSet;
+    protected AnimatorSet mEndAnimatorSet;
     private Resources mResources;
     private int mWidth;
     private int mHeight;
-    protected AnimatorSet mStartAnimatorSet;
-    protected AnimatorSet mEndAnimatorSet;
 
     public BaseWeatherType(Resources resources) {
         mResources = resources;
@@ -45,6 +45,10 @@ public abstract class BaseWeatherType implements WeatherHandler {
         return mWeatherColor;
     }
 
+    public void setWeatherColor(int weatherColor) {
+        this.mWeatherColor = weatherColor;
+    }
+
     public void end() {
         if (mStartAnimatorSet != null) {
             mStartAnimatorSet.removeAllListeners();
@@ -55,10 +59,6 @@ public abstract class BaseWeatherType implements WeatherHandler {
             mEndAnimatorSet.removeAllListeners();
             mEndAnimatorSet.cancel();
         }
-    }
-
-    public void setWeatherColor(int weatherColor) {
-        this.mWeatherColor = weatherColor;
     }
 
     public abstract void generateElements();

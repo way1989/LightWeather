@@ -4,7 +4,6 @@ import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
@@ -12,12 +11,13 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.callback.ItemDragAndSwipeCallback;
 import com.chad.library.adapter.base.listener.OnItemDragListener;
-import com.jakewharton.rxbinding2.view.RxView;
 import com.light.weather.R;
 import com.light.weather.adapter.ManageAdapter;
 import com.light.weather.bean.City;
@@ -30,7 +30,6 @@ import com.light.weather.util.RxSchedulers;
 import com.light.weather.widget.SimpleListDividerDecorator;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
@@ -46,8 +45,6 @@ public class ManageActivity extends BaseActivity {
     public static final String EXTRA_SELECTED_ITEM = "extra_selected_item";
     private static final String TAG = "ManageActivity";
     private static final int REQUEST_CODE_CITY = 0;
-    @BindView(R.id.fab)
-    FloatingActionButton mFab;
     @BindView(R.id.recycler_view)
     RecyclerView mRecyclerView;
 
@@ -57,6 +54,7 @@ public class ManageActivity extends BaseActivity {
     private boolean mDataChanged;
     private int mSelectedItem = -1;
     private StatusLayoutManager mStatusLayoutManager;
+    private long mLastClickMenuTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,15 +64,6 @@ public class ManageActivity extends BaseActivity {
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
-        mDisposable.add(RxView.clicks(mFab)
-                .throttleFirst(1, TimeUnit.SECONDS)
-                .subscribe(new Consumer<Object>() {
-                    @Override
-                    public void accept(Object o) throws Exception {
-                        startActivityForResult(new Intent(ManageActivity.this,
-                                SearchCityActivity.class), REQUEST_CODE_CITY);
-                    }
-                }));
         mAdapter = new ManageAdapter(R.layout.item_manage_city, null);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
         mRecyclerView.addItemDecoration(new SimpleListDividerDecorator(ContextCompat
@@ -152,6 +141,26 @@ public class ManageActivity extends BaseActivity {
                 .setDefaultErrorClickViewVisible(false)
                 .build();
         getCities();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_manager, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_add:
+                if (System.currentTimeMillis() - mLastClickMenuTime > 2000L) {
+                    startActivityForResult(new Intent(ManageActivity.this,
+                            SearchCityActivity.class), REQUEST_CODE_CITY);
+                    mLastClickMenuTime = System.currentTimeMillis();
+                }
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override

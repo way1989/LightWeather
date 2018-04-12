@@ -14,6 +14,12 @@ import java.io.Serializable;
 @Entity(tableName = "city")
 public class City implements Serializable {
     private static final long serialVersionUID = -1233425412975945445L;
+    protected int isLocation;
+    @ColumnInfo(name = "orderIndex")
+    protected int index;
+    protected String codeTxt;
+    protected String code;
+    protected String tmp;
     private String city;
     private String country;
     @NonNull
@@ -25,16 +31,18 @@ public class City implements Serializable {
     private String lon;
     @ColumnInfo(name = "province")
     private String prov;
-    protected int isLocation;
-    @ColumnInfo(name = "orderIndex")
-    protected int index;
-
-    protected String codeTxt;
-    protected String code;
-    protected String tmp;
 
     public City() {
 
+    }
+
+    public City(String city, String country, @NonNull String id, String lat, String lon, String prov) {
+        this.city = city;
+        this.country = country;
+        this.areaId = id;
+        this.lat = lat;
+        this.lon = lon;
+        this.prov = prov;
     }
 
     public String getCodeTxt() {
@@ -59,15 +67,6 @@ public class City implements Serializable {
 
     public void setTmp(String tmp) {
         this.tmp = tmp;
-    }
-
-    public City(String city, String country, @NonNull String id, String lat, String lon, String prov) {
-        this.city = city;
-        this.country = country;
-        this.areaId = id;
-        this.lat = lat;
-        this.lon = lon;
-        this.prov = prov;
     }
 
     public String getCity() {

@@ -142,10 +142,6 @@ public class CircleImageView extends android.support.v7.widget.AppCompatImageVie
         return mBorderColor;
     }
 
-    public float getPadding() {
-        return mPadding;
-    }
-
     public void setBorderColor(@ColorInt int borderColor) {
         if (borderColor == mBorderColor) {
             return;
@@ -154,6 +150,10 @@ public class CircleImageView extends android.support.v7.widget.AppCompatImageVie
         mBorderColor = borderColor;
         mBorderPaint.setColor(mBorderColor);
         invalidate();
+    }
+
+    public float getPadding() {
+        return mPadding;
     }
 
     public void setBorderColorResource(@ColorRes int borderColorRes) {

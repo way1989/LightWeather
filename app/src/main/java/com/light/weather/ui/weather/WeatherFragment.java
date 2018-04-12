@@ -358,7 +358,7 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
                 mSuggestionRecyclerView.setVisibility(View.GONE);
             }
         } catch (Exception e) {
-            toast(mCity.getCity() + " Error\n" + e.toString());
+            toast(mCity.getCity() + " Error:" + e);
         }
     }
 
