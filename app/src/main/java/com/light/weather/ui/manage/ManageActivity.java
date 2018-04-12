@@ -55,7 +55,7 @@ public class ManageActivity extends BaseActivity {
     ViewModelProvider.Factory viewModelFactory;
     private ManageAdapter mAdapter;
     private boolean mDataChanged;
-    private int mSelectedItem;
+    private int mSelectedItem = -1;
     private StatusLayoutManager mStatusLayoutManager;
 
     @Override

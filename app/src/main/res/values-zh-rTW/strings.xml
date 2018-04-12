@@ -45,32 +45,5 @@
     <string name="search_city_title">搜索結果:</string>
     <string name="request_location">(重新定位)</string>
     <string name="delete">刪除</string>
-    <string name="hot_city_json">"{
-  "cities": [
-    {
-      "city": "台北",
-      "country": "中国",
-      "areaId": "CN101340101",
-      "lat": "25.04",
-      "lon": "121.516",
-      "prov": "台湾"
-    },
-    {
-      "city": "高雄",
-      "country": "中国",
-      "areaId": "CN101340201",
-      "lat": "22.619",
-      "lon": "120.276",
-      "prov": "台湾"
-    },
-    {
-      "city": "台中",
-      "country": "中国",
-      "areaId": "CN101340401",
-      "lat": "24.144",
-      "lon": "120.812",
-      "prov": "台湾"
-    }
-  ]
-}"</string>
+    <string name="hot_city_json">"{\"cities\":[{\"city\":\"臺北\",\"country\":\"中國\",\"areaId\":\"CN101340101\",\"lat\":\"25.04\",\"lon\":\"121.516\",\"prov\":\"臺灣\"},{\"city\":\"高雄\",\"country\":\"中國\",\"areaId\":\"CN101340201\",\"lat\":\"22.619\",\"lon\":\"120.276\",\"prov\":\"臺灣\"},{\"city\":\"台中\",\"country\":\"中國\",\"areaId\":\"CN101340401\",\"lat\":\"24.144\",\"lon\":\"120.812\",\"prov\":\"臺灣\"}]}"</string>
 </resources>

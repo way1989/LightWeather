@@ -76,7 +76,6 @@ public abstract class BaseFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         Log.i(TAG, "onDestroyView: ................");
-        mRootView = null;
         mIsDataInitiated = false;
         mIsViewInitiated = false;
         mDisposable.clear();

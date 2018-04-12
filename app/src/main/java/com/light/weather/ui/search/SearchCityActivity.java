@@ -101,6 +101,7 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
                 }, new Consumer<Throwable>() {
                     @Override
                     public void accept(Throwable throwable) throws Exception {
+                        Log.e(TAG, "loadDefaultCities: ", throwable);
                         Toast.makeText(getApplicationContext(), throwable.toString(), Toast.LENGTH_SHORT).show();
                     }
                 }));

@@ -12,55 +12,20 @@ import java.util.List;
  */
 
 public class WeatherUtil {
-
-    private static WeatherUtil instance;
-
+    private static volatile WeatherUtil sInstance;
 
     private WeatherUtil() {
-
     }
 
     public static WeatherUtil getInstance() {
-        if (instance == null) {
+        if (sInstance == null) {
             synchronized (WeatherUtil.class) {
-                instance = new WeatherUtil();
+                if (sInstance == null) {
+                    sInstance = new WeatherUtil();
+                }
             }
         }
-        return instance;
-    }
-
-
-    public String getShareMessage(HeWeather weather) {
-        StringBuffer message = new StringBuffer();
-        message.append(weather.getWeather().getBasic().getCity());
-        message.append("天气：");
-        message.append(weather.getWeather().getNow().getCond().getTxt());
-        message.append("，");
-        message.append(weather.getWeather().getNow().getFl()).append("℃");
-        message.append("。");
-        message.append("\r\n");
-        message.append("发布：");
-//        message.append("\r\n");
-        message.append(weather.getWeather().getBasic().getUpdate().getLoc());
-        message.append("\r\n");
-        message.append("PM2.5：").append(weather.getWeather().getAqi().getCity().getPm25());
-        message.append("，");
-        message.append(weather.getWeather().getAqi().getCity().getQlty());
-        message.append("。");
-        message.append("\r\n");
-        message.append("今天：");
-        message.append(weather.getWeather().getDaily_forecast().get(0).getTmp().getMin()).append("℃-");
-        message.append(weather.getWeather().getDaily_forecast().get(0).getTmp().getMax()).append("℃");
-        message.append("，");
-        message.append(weather.getWeather().getDaily_forecast().get(0).getCond().getTxt_d());
-        message.append("\r\n");
-        message.append("明天：");
-        message.append(weather.getWeather().getDaily_forecast().get(1).getTmp().getMin()).append("℃-");
-        message.append(weather.getWeather().getDaily_forecast().get(1).getTmp().getMax()).append("℃");
-        message.append("，");
-        message.append(weather.getWeather().getDaily_forecast().get(1).getCond().getTxt_d());
-
-        return message.toString();
+        return sInstance;
     }
 
     public static List<Suggestion> getSuggestion(HeWeather weather) {
@@ -107,6 +72,39 @@ public class WeatherUtil {
         suggestionList.add(uv);
 
         return suggestionList;
+    }
+
+    public String getShareMessage(HeWeather weather) {
+        StringBuilder message = new StringBuilder();
+        message.append(weather.getWeather().getBasic().getCity());
+        message.append("天气：");
+        message.append(weather.getWeather().getNow().getCond().getTxt());
+        message.append("，");
+        message.append(weather.getWeather().getNow().getFl()).append("℃");
+        message.append("。");
+        message.append("\r\n");
+        message.append("发布：");
+//        message.append("\r\n");
+        message.append(weather.getWeather().getBasic().getUpdate().getLoc());
+        message.append("\r\n");
+        message.append("PM2.5：").append(weather.getWeather().getAqi().getCity().getPm25());
+        message.append("μg/m³ ");
+        message.append(weather.getWeather().getAqi().getCity().getQlty());
+        message.append("。");
+        message.append("\r\n");
+        message.append("今天：");
+        message.append(weather.getWeather().getDaily_forecast().get(0).getTmp().getMin()).append("℃-");
+        message.append(weather.getWeather().getDaily_forecast().get(0).getTmp().getMax()).append("℃");
+        message.append("，");
+        message.append(weather.getWeather().getDaily_forecast().get(0).getCond().getTxt_d());
+        message.append("\r\n");
+        message.append("明天：");
+        message.append(weather.getWeather().getDaily_forecast().get(1).getTmp().getMin()).append("℃-");
+        message.append(weather.getWeather().getDaily_forecast().get(1).getTmp().getMax()).append("℃");
+        message.append("，");
+        message.append(weather.getWeather().getDaily_forecast().get(1).getCond().getTxt_d());
+
+        return message.toString();
     }
 
 }

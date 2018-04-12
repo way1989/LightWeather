@@ -8,8 +8,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
@@ -62,17 +61,16 @@ public class MainActivity extends BaseActivity
     SimplePagerIndicator mIndicator;
     @Inject
     ViewModelProvider.Factory viewModelFactory;
-    private MainFragmentPagerAdapter mAdapter;
-    private List<City> mCities = new ArrayList<>();
-    private int mSelectItem = 0;
+    private MainFragmentPagerAdapter<City> mAdapter;
+    private List<City> mCities;
+    private int mSelectItem = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setTheme(R.style.AppTheme_NoActionBar);
         super.onCreate(savedInstanceState);
-        //setTheme(R.style.AppTheme_NoActionBar);
         mViewModel = ViewModelProviders.of(this, viewModelFactory).get(WeatherViewModel.class);
 
-//        getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         mMainViewPager.setPadding(0, UiUtil.getStatusBarHeight() + UiUtil.getActionBarHeight(), 0, 0);
         mAppBarLayout.setPadding(0, UiUtil.getStatusBarHeight(), 0, 0);
         ((ViewGroup) mIndicator.getParent()).setPadding(0, UiUtil.getStatusBarHeight(), 0, 0);
@@ -85,8 +83,9 @@ public class MainActivity extends BaseActivity
     }
 
     private void setupViewPager() {
-        mAdapter = new MainFragmentPagerAdapter(getSupportFragmentManager());
+        mAdapter = new MainFragmentPagerAdapter<>(getSupportFragmentManager(), null);
         mMainViewPager.setAdapter(mAdapter);
+        mMainViewPager.setOffscreenPageLimit(8);//最多缓存9个
         mIndicator.setViewPager(mMainViewPager);
     }
 
@@ -149,18 +148,16 @@ public class MainActivity extends BaseActivity
         return R.layout.activity_main;
     }
 
-    public void onCityChange(List<City> cities) {
-        Log.d(TAG, "onCityChange: cities = " + cities);
+    public void updateAdapter(List<City> cities) {
+        Log.d(TAG, "updateAdapter: cities = " + cities);
         mCities = cities;
         if (mCities != null && !mCities.isEmpty()) {
             mAdapter.setNewData(mCities);
-            //mMainViewPager.setAdapter(mAdapter);
-            //mMainViewPager.setOffscreenPageLimit(mAdapter.getCount() - 1);
             if (mSelectItem >= 0 && mSelectItem < mAdapter.getCount()) {
                 mMainViewPager.setCurrentItem(mSelectItem);
-                mIndicator.notifyDataSetChanged();
                 mSelectItem = -1;
             }
+            mIndicator.notifyDataSetChanged();
         }
     }
 
@@ -171,14 +168,13 @@ public class MainActivity extends BaseActivity
                 .subscribe(new Consumer<List<City>>() {
                     @Override
                     public void accept(List<City> cities) {
-                        Log.d(TAG, "getCities onNext: cities = " + cities.size());
-                        onCityChange(cities);
+                        updateAdapter(cities);
                     }
                 }, new Consumer<Throwable>() {
                     @Override
                     public void accept(Throwable throwable) throws Exception {
                         Toast.makeText(getApplicationContext(), "getCities onError: " + throwable, Toast.LENGTH_LONG).show();
-                        Log.d(TAG, "getCities onError: ", throwable);
+                        Log.e(TAG, "getCities onError: ", throwable);
                     }
                 }));
     }
@@ -189,18 +185,15 @@ public class MainActivity extends BaseActivity
     }
 
     @Override
-    public void onLocationChange(City city) {
-        int index = -1;
+    public void updateLocationCity(City city) {
         for (int i = 0; i < mCities.size(); i++) {
             if (mCities.get(i).getIsLocation() == 1) {
-                index = i;
+                Log.d(TAG, "updateLocationCity: city = " + city + ", location city index = " + i);
+                mCities.set(i, city);
+                mAdapter.setNewData(mCities);
+                mIndicator.notifyDataSetChanged();
                 break;
             }
-        }
-        Log.d(TAG, "onLocationChange: city = " + city + ", location city index = " + index);
-        if (index >= 0 && index < mCities.size()) {
-            mAdapter.replace(index, city.getCity());
-            mIndicator.notifyDataSetChanged();
         }
     }
 
@@ -209,53 +202,37 @@ public class MainActivity extends BaseActivity
         return dispatchingAndroidInjector;
     }
 
-    public static class MainFragmentPagerAdapter extends FragmentPagerAdapter {
-        private FragmentManager mFragmentManager;
-        private List<Fragment> mFragments;
-        private List<String> mTitles;
+    public static class MainFragmentPagerAdapter<T extends City> extends FragmentStatePagerAdapter {
+        private boolean isUpdateData;
+        private List<T> mData;
 
-        MainFragmentPagerAdapter(FragmentManager fragmentManager) {
+        MainFragmentPagerAdapter(FragmentManager fragmentManager, List<T> data) {
             super(fragmentManager);
-            mFragmentManager = fragmentManager;
-            this.mFragments = new ArrayList<>();
-            this.mTitles = new ArrayList<>();
+            this.mData = data == null ? new ArrayList<T>() : data;
+            isUpdateData = false;
         }
 
-        void setNewData(List<City> cities) {
-            if (!mFragments.isEmpty()) {
-                FragmentTransaction ft = mFragmentManager.beginTransaction();
-                for (Fragment f : mFragments) {
-                    ft.remove(f);
-                }
-                ft.commitAllowingStateLoss();
-                mFragmentManager.executePendingTransactions();
-            }
-            mFragments.clear();
-            mTitles.clear();
-            for (City city : cities) {
-                Log.i(TAG, "setNewData: city = " + city.getCity());
-                mFragments.add(WeatherFragment.makeInstance(city));
-                mTitles.add(TextUtils.isEmpty(city.getCity()) ? UNKNOWN_CITY : city.getCity());
-            }
+        void setNewData(List<T> data) {
+            this.mData = data == null ? new ArrayList<T>() : data;
             notifyDataSetChanged();
         }
 
         @Override
         public Fragment getItem(int position) {
-            Fragment fragment = mFragments.get(position);
+            Fragment fragment = WeatherFragment.makeInstance(mData.get(position));
             fragment.setRetainInstance(true);
             return fragment;
         }
 
         @Override
         public CharSequence getPageTitle(int position) {
-            final CharSequence charSequence = mTitles.get(position);
+            final CharSequence charSequence = mData.get(position).getCity();
             return TextUtils.isEmpty(charSequence) ? UNKNOWN_CITY : charSequence;
         }
 
         @Override
         public int getCount() {
-            return mFragments.size();
+            return mData.size();
         }
 
         @Override
@@ -270,14 +247,17 @@ public class MainActivity extends BaseActivity
         }
 
         @Override
-        public int getItemPosition(@NonNull Object object) {
-            return super.getItemPosition(object);
-//            return POSITION_NONE;
+        public void notifyDataSetChanged() {
+            isUpdateData = true;
+            super.notifyDataSetChanged();
+            isUpdateData = false;
         }
 
-        void replace(int index, String city) {
-            mTitles.remove(index);
-            mTitles.add(index, city);
+        @Override
+        public int getItemPosition(@NonNull Object object) {
+            if (isUpdateData) return POSITION_NONE;
+            return super.getItemPosition(object);
         }
+
     }
 }

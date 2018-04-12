@@ -1,6 +1,7 @@
 package com.light.weather.ui.weather;
 
 import android.Manifest;
+import android.app.Activity;
 import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
@@ -21,7 +22,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
-import com.light.weather.BuildConfig;
 import com.light.weather.R;
 import com.light.weather.adapter.AqiAdapter;
 import com.light.weather.adapter.SuggestionAdapter;
@@ -88,6 +88,7 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
     private HeWeather mWeather;
     private SuggestionAdapter mSuggestionAdapter;
     private AqiAdapter mAqiAdapter;
+    private long mLastClickMenuTime;
 
     public static WeatherFragment makeInstance(@NonNull City city) {
         WeatherFragment fragment = new WeatherFragment();
@@ -121,8 +122,15 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
         Log.d(TAG, "onOptionsItemSelected: item = " + item);
         switch (item.getItemId()) {
             case R.id.action_share:
-                Log.d(TAG, "onOptionsItemSelected: id = share... isVisible = " + getUserVisibleHint());
-                onShareItemClick();
+                if (System.currentTimeMillis() - mLastClickMenuTime > 2000L) {
+                    Log.d(TAG, "onOptionsItemSelected: id = share...");
+                    final Activity activity = getActivity();
+                    if (activity != null && mWeather != null && mWeather.isOK()) {
+                        final String shareInfo = WeatherUtil.getInstance().getShareMessage(mWeather);
+                        ShareUtils.shareText(activity, shareInfo, getString(R.string.action_share));
+                    }
+                    mLastClickMenuTime = System.currentTimeMillis();
+                }
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -150,36 +158,9 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
         }
     }
 
-    private City getArgCity() {
-        return (City) getArguments().getSerializable(ARG_KEY);
-    }
-
     @Override
     protected int getLayoutId() {
         return R.layout.fragment_weather;
-    }
-
-    public void onShareItemClick() {
-        if (getUserVisibleHint() && mWeather != null && mWeather.isOK()) {
-            final String shareInfo = WeatherUtil.getInstance().getShareMessage(mWeather);
-            ShareUtils.shareText(getContext(), shareInfo, getString(R.string.action_share));
-            mWWeatherScrollView.scrollTo(0, 0);
-//            RxImage.saveText2ImageObservable(mWWeatherScrollView)
-//                    .compose(RxSchedulers.<File>io_main())
-//                    .subscribe(new Consumer<File>() {
-//                        @Override
-//                        public void accept(File file) throws Exception {
-//                            Log.d(TAG, "onShareItemClick onNext: file = " + file);
-//                            ShareUtils.shareImage(getActivity(), file, "分享到");
-//                        }
-//                    }, new Consumer<Throwable>() {
-//                        @Override
-//                        public void accept(Throwable throwable) throws Exception {
-//                            Log.e(TAG, "onShareItemClick onError: ", throwable);
-//                            showErrorTip("share error:" + throwable.getMessage());
-//                        }
-//                    });
-        }
     }
 
     public void onWeatherChange(HeWeather weather) {
@@ -189,7 +170,7 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
 
     public void onLocationChange(City city) {
         if (!TextUtils.equals(mCity.getAreaId(), city.getAreaId())) {
-            mListener.onLocationChange(city);
+            mListener.updateLocationCity(city);
         }
         if (getUserVisibleHint()) {
             mCity = city;
@@ -197,16 +178,11 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
         }
     }
 
-    public void showErrorTip(String msg) {
-        if (BuildConfig.LOG_DEBUG)
-            toast(msg);
-    }
-
     @Override
     public void loadDataFirstTime() {
         Log.d(TAG, "loadDataFirstTime: .............");
         if (getActivity() == null || mCity == null) {
-            showErrorTip("city is null");
+            toast("city is null");
             Log.e(TAG, "loadDataFirstTime: ", new Throwable("something is null..."));
             return;
         }
@@ -222,7 +198,7 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
         final boolean isDirty = mCity != null && !TextUtils.isEmpty(mCity.getAreaId())
                 && mWeather != null && mWeather.isOK()
                 && (System.currentTimeMillis() - mWeather.getUpdateTime() > WEATHER_DIRTY_TIME);
-        //Log.i(TAG, "isDataDirty: " + isDirty);
+        Log.v(TAG, "isDataDirty: " + isDirty + ", city = " + mCity);
         return isDirty;
     }
 
@@ -247,7 +223,7 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
                     public void accept(Throwable throwable) {
                         Log.e(TAG, "getWeather onError: ", throwable);
                         updateRefreshStatus(false);
-                        showErrorTip(throwable.toString());
+                        toast(throwable.toString());
                     }
                 }));
 
@@ -255,7 +231,10 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
 
     @Override
     protected void initView() {
-        mCity = getArgCity();
+        final Bundle bundle = getArguments();
+        if (bundle != null) {
+            mCity = (City) bundle.getSerializable(ARG_KEY);
+        }
 
         mAqiRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 2) {
             @Override
@@ -353,14 +332,6 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
                         getString(R.string.weather_update, w.getBasic().getUpdate().getLoc().substring(5)));
             }
 
-//            setTextViewString(R.id.w_todaydetail_bottomline, w.getNow().getCond().getTxt() + "  " + weather.getTodayTempDescription());
-//            setTextViewString(R.id.w_todaydetail_temp, getString(R.string.weather_temp, w.getNow().getTmp()));
-//
-//            setTextViewString(R.id.w_now_fl, getString(R.string.weather_temp, w.getNow().getFl()));
-//            setTextViewString(R.id.w_now_hum, w.getNow().getHum() + "%");// 湿度
-//            setTextViewString(R.id.w_now_vis, getString(R.string.weather_km, w.getNow().getVis()));// 能见度
-//            setTextViewString(R.id.w_now_pcpn, getString(R.string.weather_mm, w.getNow().getPcpn())); // 降雨量
-
             if (weather.hasAqi()) {
                 mWAqiView.setAqi(weather);
                 setAqiDetail(weather);
@@ -370,44 +341,12 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
                 } else {
                     setTextViewString(R.id.w_now_cond_text, w.getNow().getCond().getTxt() + "\r\n" + qlty);
                 }
-//                setTextViewString(R.id.w_aqi_detail_text, qlty);
-//                final String pm25 = w.getAqi().getCity().getPm25();
-//                setTextViewString(R.id.w_aqi_pm25, TextUtils.isEmpty(pm25) ? getString(R.string.nodata)
-//                        : getString(R.string.weather_ug_m3, pm25));
-//                final String pm10 = w.getAqi().getCity().getPm10();
-//                setTextViewString(R.id.w_aqi_pm10, TextUtils.isEmpty(pm10) ? getString(R.string.nodata)
-//                        : getString(R.string.weather_ug_m3, pm10));
-//                final String so2 = w.getAqi().getCity().getSo2();
-//                setTextViewString(R.id.w_aqi_so2, TextUtils.isEmpty(so2) ? getString(R.string.nodata)
-//                        : getString(R.string.weather_ug_m3, so2));
-//                final String no2 = w.getAqi().getCity().getNo2();
-//                setTextViewString(R.id.w_aqi_no2, TextUtils.isEmpty(no2) ? getString(R.string.nodata)
-//                        : getString(R.string.weather_ug_m3, no2));
+
             } else {
                 setTextViewString(R.id.w_now_cond_text, w.getNow().getCond().getTxt());
-//                mRootView.findViewById(R.id.air_quality_item).setVisibility(View.GONE);
             }
             setSuggestion(weather);
-//            if (w.getSuggestion() != null) {
-//                setTextViewString(R.id.w_suggestion_comf, w.getSuggestion().getComf().getTxt());
-//                setTextViewString(R.id.w_suggestion_cw, w.getSuggestion().getCw().getTxt());
-//                setTextViewString(R.id.w_suggestion_drsg, w.getSuggestion().getDrsg().getTxt());
-//                setTextViewString(R.id.w_suggestion_flu, w.getSuggestion().getFlu().getTxt());
-//                setTextViewString(R.id.w_suggestion_sport, w.getSuggestion().getSport().getTxt());
-//                setTextViewString(R.id.w_suggestion_tarv, w.getSuggestion().getTrav().getTxt());
-//                setTextViewString(R.id.w_suggestion_uv, w.getSuggestion().getUv().getTxt());
-//                setTextViewString(R.id.w_suggestion_comf_brf, w.getSuggestion().getComf().getBrf());
-//                setTextViewString(R.id.w_suggestion_cw_brf, w.getSuggestion().getCw().getBrf());
-//                setTextViewString(R.id.w_suggestion_drsg_brf, w.getSuggestion().getDrsg().getBrf());
-//                setTextViewString(R.id.w_suggestion_flu_brf, w.getSuggestion().getFlu().getBrf());
-//                setTextViewString(R.id.w_suggestion_sport_brf, w.getSuggestion().getSport().getBrf());
-//                setTextViewString(R.id.w_suggestion_tarv_brf, w.getSuggestion().getTrav().getBrf());
-//                setTextViewString(R.id.w_suggestion_uv_brf, w.getSuggestion().getUv().getBrf());
-//            } else {
-//                mRootView.findViewById(R.id.index_item).setVisibility(View.GONE);
-//            }
         } catch (Exception e) {
-            e.printStackTrace();
             toast(mCity.getCity() + " Error\n" + e.toString());
         }
     }
@@ -437,7 +376,6 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
         if (getUserVisibleHint() && mWeather != null && mWeather.isOK()) {
             BaseWeatherType type = TypeUtil.getType(getResources(), getShortWeatherInfo(weather));
             mListener.onDrawerTypeChange(type);
-            //RxBus.getInstance().post(type);
         }
     }
 
@@ -454,7 +392,6 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
     }
 
     private void setTextViewString(int textViewId, String str) {
-
         TextView tv = mRootView.findViewById(textViewId);
         if (tv != null) {
             tv.setText(str);
@@ -464,14 +401,18 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
     }
 
     protected void toast(String msg) {
-        //Snackbar.make(mWPullRefreshLayout, msg, Snackbar.LENGTH_SHORT).show();
         Toast.makeText(getContext(), msg, Toast.LENGTH_LONG).show();
     }
 
     private void getLocation() {
-        Log.d(TAG, "getLocation: start...");
+        final Activity activity = getActivity();
+        Log.d(TAG, "getLocation: start... activity = " + activity);
+        if (activity == null) {
+            toast("activity is null when getLocation...");
+            return;
+        }
         updateRefreshStatus(true);
-        mDisposable.add(new RxPermissions(getActivity())
+        mDisposable.add(new RxPermissions(activity)
                 .requestEachCombined(Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.ACCESS_COARSE_LOCATION,
                         Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -499,7 +440,7 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
                     public void accept(Throwable throwable) {
                         Log.e(TAG, "requestLocation: onError ", throwable);
                         updateRefreshStatus(false);
-                        showErrorTip(throwable.toString());
+                        toast(throwable.toString());
                     }
                 }));
     }
@@ -507,7 +448,7 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
     public interface OnDrawerTypeChangeListener {
         void onDrawerTypeChange(BaseWeatherType type);
 
-        void onLocationChange(City city);
+        void updateLocationCity(City city);
     }
 
 }
