@@ -10,7 +10,6 @@ import com.google.gson.GsonBuilder;
 import com.light.weather.BuildConfig;
 import com.light.weather.R;
 import com.light.weather.api.ApiService;
-import com.light.weather.api.CacheService;
 import com.light.weather.bean.City;
 import com.light.weather.bean.HeCity;
 import com.light.weather.bean.HeWeather;
@@ -20,6 +19,7 @@ import com.light.weather.data.IRepositoryManager;
 import com.light.weather.db.CityDao;
 import com.light.weather.db.CityDatabase;
 import com.light.weather.ui.main.MainActivity;
+import com.light.weather.util.RetryWithDelay;
 import com.light.weather.util.RxLocation;
 
 import java.lang.reflect.Modifier;
@@ -36,15 +36,13 @@ import io.reactivex.ObservableSource;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
-import io.rx_cache2.DynamicKey;
-import io.rx_cache2.EvictProvider;
 
 /**
  * Created by android on 18-1-29.
  */
 public class WeatherViewModel extends AndroidViewModel {
     private static final String TAG = "WeatherViewModel";
-    private static final long TIMEOUT_DURATION = 30L;//20s timeout
+    private static final long TIMEOUT_DURATION = 10L;//10s timeout
     private static final String LANG = "zh-cn";
     private IRepositoryManager mRepositoryManager;//用于管理网络请求层,以及数据缓存层
 
@@ -54,7 +52,7 @@ public class WeatherViewModel extends AndroidViewModel {
         mRepositoryManager = manager;
     }
 
-    public Observable<List<SearchItem>> getDefaultCities(){
+    public Observable<List<SearchItem>> getDefaultCities() {
         return Observable.create(new ObservableOnSubscribe<List<SearchItem>>() {
             @Override
             public void subscribe(ObservableEmitter<List<SearchItem>> e) {
@@ -221,10 +219,9 @@ public class WeatherViewModel extends AndroidViewModel {
     }
 
     public Observable<HeWeather> getWeather(final City city, boolean force) {
-        final CacheService cacheService = mRepositoryManager.obtainCacheService(CacheService.class);
         final ApiService apiService = mRepositoryManager.obtainRetrofitService(ApiService.class);
-        return cacheService.getWeather(apiService.getWeather(BuildConfig.HEWEATHER_KEY, city.getAreaId(), LANG),
-                new DynamicKey(city), new EvictProvider(force))
+        final RetryWithDelay retryWithDelay = new RetryWithDelay(3, 3000L);
+        return apiService.getWeather(BuildConfig.HEWEATHER_KEY, city.getAreaId(), LANG)
                 .timeout(TIMEOUT_DURATION, TimeUnit.SECONDS)
                 .observeOn(Schedulers.io())
                 .doOnNext(new Consumer<HeWeather>() {
@@ -242,6 +239,6 @@ public class WeatherViewModel extends AndroidViewModel {
                             getDB(mRepositoryManager).update(city);
                         }
                     }
-                });
+                }).retryWhen(retryWithDelay);
     }
 }

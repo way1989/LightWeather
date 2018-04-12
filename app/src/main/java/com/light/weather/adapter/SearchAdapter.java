@@ -2,11 +2,11 @@ package com.light.weather.adapter;
 
 import android.widget.TextView;
 
+import com.chad.library.adapter.base.BaseSectionQuickAdapter;
+import com.chad.library.adapter.base.BaseViewHolder;
 import com.light.weather.R;
 import com.light.weather.bean.City;
 import com.light.weather.bean.SearchItem;
-import com.chad.library.adapter.base.BaseSectionQuickAdapter;
-import com.chad.library.adapter.base.BaseViewHolder;
 
 import java.util.List;
 

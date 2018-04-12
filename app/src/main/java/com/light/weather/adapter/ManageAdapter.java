@@ -4,12 +4,12 @@ import android.support.annotation.LayoutRes;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.chad.library.adapter.base.BaseItemDraggableAdapter;
+import com.chad.library.adapter.base.BaseViewHolder;
 import com.light.weather.R;
 import com.light.weather.bean.City;
 import com.light.weather.util.FormatUtil;
 import com.light.weather.util.UiUtil;
-import com.chad.library.adapter.base.BaseItemDraggableAdapter;
-import com.chad.library.adapter.base.BaseViewHolder;
 
 import java.util.List;
 
@@ -37,7 +37,7 @@ public class ManageAdapter extends BaseItemDraggableAdapter<City, BaseViewHolder
         }
         // set text
         tvName.setText(name);
-        tvWeather.setText(item.getCodeTxt() + " " + item.getTmp()+ "℃");
+        tvWeather.setText(item.getCodeTxt() + " " + item.getTmp() + "℃");
         tvIcon.setImageResource(FormatUtil.convertWeatherIcon(item.getCode()));
     }
 

@@ -1,11 +1,11 @@
 package com.light.weather.adapter;
 
 
+import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.chad.library.adapter.base.BaseViewHolder;
 import com.light.weather.R;
 import com.light.weather.bean.Suggestion;
 import com.light.weather.widget.CircleImageView;
-import com.chad.library.adapter.base.BaseQuickAdapter;
-import com.chad.library.adapter.base.BaseViewHolder;
 
 import java.util.List;
 

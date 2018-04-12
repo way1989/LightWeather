@@ -19,7 +19,8 @@ public class TypeUtil {
         return getHeWeatherType(context, info);
     }
 
-    public static @ColorInt int getWeatherColor(HeWeather weather) {
+    public static @ColorInt
+    int getWeatherColor(HeWeather weather) {
         String weatherCode = weather.getWeather().getNow().getCond().getCode();
         final int w = Integer.valueOf(TextUtils.isEmpty(weatherCode) ? "999" : weatherCode);
         final int hourOfDay = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);

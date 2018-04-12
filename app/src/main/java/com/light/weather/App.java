@@ -2,7 +2,6 @@ package com.light.weather;
 
 import android.app.Activity;
 import android.app.Application;
-import android.os.StrictMode;
 
 import com.light.weather.di.AppInjector;
 import com.squareup.leakcanary.LeakCanary;

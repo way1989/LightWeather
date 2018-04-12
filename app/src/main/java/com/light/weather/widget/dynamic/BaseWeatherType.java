@@ -2,13 +2,10 @@ package com.light.weather.widget.dynamic;
 
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
-import android.animation.ArgbEvaluator;
-import android.animation.ValueAnimator;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.view.animation.LinearInterpolator;
 
 import java.util.Random;
 
@@ -59,6 +56,7 @@ public abstract class BaseWeatherType implements WeatherHandler {
             mEndAnimatorSet.cancel();
         }
     }
+
     public void setWeatherColor(int weatherColor) {
         this.mWeatherColor = weatherColor;
     }

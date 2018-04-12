@@ -124,7 +124,7 @@ public class CircleImageView extends android.support.v7.widget.AppCompatImageVie
         }
 
         if (mFillColor != Color.TRANSPARENT) {
-            canvas.drawCircle(getWidth() / 2.0f, getHeight() / 2.0f, mDrawableRadius+mPadding, mFillPaint);
+            canvas.drawCircle(getWidth() / 2.0f, getHeight() / 2.0f, mDrawableRadius + mPadding, mFillPaint);
         }
         canvas.drawCircle(getWidth() / 2.0f, getHeight() / 2.0f, mDrawableRadius, mBitmapPaint);
         if (mBorderWidth != 0) {
@@ -303,8 +303,8 @@ public class CircleImageView extends android.support.v7.widget.AppCompatImageVie
         mBitmapHeight = mBitmap.getHeight();
         mBitmapWidth = mBitmap.getWidth();
 
-        mBorderRect.set(mPadding, mPadding, getWidth()-mPadding, getHeight()-mPadding);
-        mBorderRadius = Math.min((mBorderRect.height()+mPadding+mPadding - mBorderWidth) / 2.0f, (mBorderRect.width()+mPadding+mPadding - mBorderWidth) / 2.0f);
+        mBorderRect.set(mPadding, mPadding, getWidth() - mPadding, getHeight() - mPadding);
+        mBorderRadius = Math.min((mBorderRect.height() + mPadding + mPadding - mBorderWidth) / 2.0f, (mBorderRect.width() + mPadding + mPadding - mBorderWidth) / 2.0f);
 
         mDrawableRect.set(mBorderRect);
         if (!mBorderOverlay) {

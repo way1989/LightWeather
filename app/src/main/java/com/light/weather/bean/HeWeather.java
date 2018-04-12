@@ -2,8 +2,8 @@ package com.light.weather.bean;
 
 import android.text.TextUtils;
 
-import com.light.weather.util.FormatUtil;
 import com.google.gson.annotations.SerializedName;
+import com.light.weather.util.FormatUtil;
 
 import java.io.Serializable;
 import java.util.List;

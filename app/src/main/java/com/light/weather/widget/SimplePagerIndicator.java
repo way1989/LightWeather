@@ -98,7 +98,7 @@ public class SimplePagerIndicator extends View implements ViewPager.OnPageChange
                 if (i == 0) {
                     matrix.reset();
                     matrix.postScale(0.4f, 0.4f);
-                    matrix.postTranslate(startX - locationBitmap.getWidth()/5, roundBaseline - locationBitmap.getHeight() / 5);
+                    matrix.postTranslate(startX - locationBitmap.getWidth() / 5, roundBaseline - locationBitmap.getHeight() / 5);
                     canvas.drawBitmap(locationBitmap, matrix, roundPaint);
                 } else {
                     canvas.drawCircle(startX + (2 * roundRadius * i) + roundPadding * i, roundBaseline, roundRadius, roundPaint);
@@ -109,7 +109,7 @@ public class SimplePagerIndicator extends View implements ViewPager.OnPageChange
             if (selectedPosition == 0) {
                 matrix.reset();
                 matrix.postScale(0.4f, 0.4f);
-                matrix.postTranslate(startX + offSetX - locationBitmap.getWidth()/5, roundBaseline - locationBitmap.getHeight() / 5);
+                matrix.postTranslate(startX + offSetX - locationBitmap.getWidth() / 5, roundBaseline - locationBitmap.getHeight() / 5);
                 canvas.drawBitmap(locationBitmap, matrix, selectedRoundPaint);
             } else {
                 canvas.drawCircle(startX + (2 * roundRadius * selectedPosition) + roundPadding * selectedPosition + offSetX, roundBaseline, roundRadius, selectedRoundPaint);

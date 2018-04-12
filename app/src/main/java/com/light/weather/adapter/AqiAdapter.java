@@ -2,10 +2,10 @@ package com.light.weather.adapter;
 
 import android.text.TextUtils;
 
-import com.light.weather.R;
-import com.light.weather.bean.AqiDetailBean;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.BaseViewHolder;
+import com.light.weather.R;
+import com.light.weather.bean.AqiDetailBean;
 
 import java.util.List;
 
