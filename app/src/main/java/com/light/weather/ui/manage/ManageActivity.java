@@ -67,7 +67,7 @@ public class ManageActivity extends BaseActivity {
         mAdapter = new ManageAdapter(R.layout.item_manage_city, null);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
         mRecyclerView.addItemDecoration(new SimpleListDividerDecorator(ContextCompat
-                .getDrawable(getApplicationContext(), R.drawable.list_divider_h), false));
+                .getDrawable(this, R.drawable.list_divider_h), false));
         mRecyclerView.setAdapter(mAdapter);
 
         ItemDragAndSwipeCallback itemDragAndSwipeCallback = new ItemDragAndSwipeCallback(mAdapter) {

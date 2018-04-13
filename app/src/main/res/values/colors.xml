@@ -41,4 +41,5 @@
 
     <color name="colorTextDark">#424242</color>
     <color name="colorTextDark2nd">#757575</color>
+    <color name="divider_color">#20000000</color>
 </resources>

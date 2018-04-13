@@ -22,6 +22,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.light.weather.BuildConfig;
 import com.light.weather.R;
 import com.light.weather.adapter.AqiAdapter;
 import com.light.weather.adapter.SuggestionAdapter;
@@ -62,6 +63,12 @@ import io.reactivex.functions.Function;
 
 public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.OnRefreshListener, Injectable {
     private static final String TAG = "WeatherFragment";
+    private static final String REQUEST_PERMISSIONS[] = BuildConfig.DEBUG
+            ? new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE}
+            : new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION};
     private static final long WEATHER_DIRTY_TIME = 30 * 60 * 1000L;
     private static final String ARG_KEY = "city";
     @BindView(R.id.w_dailyForecastView)
@@ -424,9 +431,7 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
         }
         updateRefreshStatus(true);
         mDisposable.add(new RxPermissions(activity)
-                .requestEachCombined(Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                .requestEachCombined(REQUEST_PERMISSIONS)
                 .observeOn(AndroidSchedulers.mainThread())
                 .concatMap(new Function<Permission, ObservableSource<City>>() {
                     @Override

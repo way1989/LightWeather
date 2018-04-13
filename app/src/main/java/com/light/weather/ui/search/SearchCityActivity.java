@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -30,7 +31,7 @@ import com.light.weather.ui.base.BaseActivity;
 import com.light.weather.ui.common.WeatherViewModel;
 import com.light.weather.util.AppConstant;
 import com.light.weather.util.RxSchedulers;
-import com.light.weather.widget.SimpleListDividerDecorator;
+import com.light.weather.widget.GridDividerItemDecoration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,8 +82,7 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
             }
         });
         mRecyclerView.setAdapter(mSearchAdapter);
-        mRecyclerView.addItemDecoration(new SimpleListDividerDecorator(
-                getDrawable(R.drawable.list_divider_h), getDrawable(R.drawable.list_divider_v), false));
+        mRecyclerView.addItemDecoration(new GridDividerItemDecoration(1, ContextCompat.getColor(this, R.color.divider_color)));
 
         loadDefaultCities();
     }
