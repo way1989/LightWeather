@@ -10,7 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.light.weather.ui.common.WeatherViewModel;
+import com.light.weather.viewmodel.WeatherViewModel;
 
 import butterknife.ButterKnife;
 import io.reactivex.disposables.CompositeDisposable;

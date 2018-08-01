@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.light.weather.viewmodel;
+package com.light.weather.di;
 
 import android.arch.lifecycle.ViewModel;
 import android.arch.lifecycle.ViewModelProvider;

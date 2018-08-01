@@ -1,4 +1,4 @@
-package com.light.weather.ui.common;
+package com.light.weather.viewmodel;
 
 import android.app.Application;
 import android.arch.lifecycle.AndroidViewModel;

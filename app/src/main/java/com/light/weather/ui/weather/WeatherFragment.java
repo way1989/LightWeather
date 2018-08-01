@@ -2,8 +2,6 @@ package com.light.weather.ui.weather;
 
 import android.Manifest;
 import android.app.Activity;
-import android.arch.lifecycle.ViewModelProvider;
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -29,9 +27,8 @@ import com.light.weather.adapter.SuggestionAdapter;
 import com.light.weather.bean.AqiDetailBean;
 import com.light.weather.bean.City;
 import com.light.weather.bean.HeWeather;
-import com.light.weather.di.Injectable;
-import com.light.weather.ui.base.BaseFragment;
-import com.light.weather.ui.common.WeatherViewModel;
+import com.light.weather.ui.base.BaseDagger2Fragment;
+import com.light.weather.viewmodel.WeatherViewModel;
 import com.light.weather.util.FormatUtil;
 import com.light.weather.util.RxSchedulers;
 import com.light.weather.util.ShareUtils;
@@ -49,8 +46,6 @@ import com.tbruyelle.rxpermissions2.RxPermissions;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.inject.Inject;
-
 import butterknife.BindView;
 import io.reactivex.ObservableSource;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -61,7 +56,7 @@ import io.reactivex.functions.Function;
  * Created by android on 16-11-10.
  */
 
-public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.OnRefreshListener, Injectable {
+public class WeatherFragment extends BaseDagger2Fragment<WeatherViewModel> implements SwipeRefreshLayout.OnRefreshListener {
     private static final String TAG = "WeatherFragment";
     private static final String REQUEST_PERMISSIONS[] = BuildConfig.DEBUG
             ? new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
@@ -88,8 +83,6 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
 
     @BindView(R.id.aqi_recyclerview)
     RecyclerView mAqiRecyclerView;
-    @Inject
-    ViewModelProvider.Factory viewModelFactory;
     private OnDrawerTypeChangeListener mListener;
     private City mCity;
     private HeWeather mWeather;
@@ -103,12 +96,6 @@ public class WeatherFragment extends BaseFragment implements SwipeRefreshLayout.
         bundle.putSerializable(ARG_KEY, city);
         fragment.setArguments(bundle);
         return fragment;
-    }
-
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        mViewModel = ViewModelProviders.of(this, viewModelFactory).get(WeatherViewModel.class);
-        super.onActivityCreated(savedInstanceState);
     }
 
     @Override

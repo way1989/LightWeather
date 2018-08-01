@@ -1,7 +1,5 @@
 package com.light.weather.ui.main;
 
-import android.arch.lifecycle.ViewModelProvider;
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -19,8 +17,8 @@ import android.widget.Toast;
 import com.jakewharton.rxbinding2.support.v7.widget.RxToolbar;
 import com.light.weather.R;
 import com.light.weather.bean.City;
-import com.light.weather.ui.base.BaseActivity;
-import com.light.weather.ui.common.WeatherViewModel;
+import com.light.weather.ui.base.BaseDagger2Activity;
+import com.light.weather.viewmodel.WeatherViewModel;
 import com.light.weather.ui.manage.ManageActivity;
 import com.light.weather.ui.weather.WeatherFragment;
 import com.light.weather.util.RxSchedulers;
@@ -33,22 +31,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
-
 import butterknife.BindView;
-import dagger.android.AndroidInjector;
-import dagger.android.DispatchingAndroidInjector;
-import dagger.android.support.HasSupportFragmentInjector;
 import io.reactivex.functions.Consumer;
 
 
-public class MainActivity extends BaseActivity
-        implements WeatherFragment.OnDrawerTypeChangeListener, HasSupportFragmentInjector {
+public class MainActivity extends BaseDagger2Activity<WeatherViewModel>
+        implements WeatherFragment.OnDrawerTypeChangeListener {
     public static final String UNKNOWN_CITY = "unknown";
     private static final String TAG = "MainActivity";
     private static final int REQUEST_CODE_CITY = 0;
-    @Inject
-    DispatchingAndroidInjector<Fragment> dispatchingAndroidInjector;
     @BindView(R.id.dynamic_weather_view)
     DynamicWeatherView mDynamicWeatherView;
     @BindView(R.id.main_view_pager)
@@ -59,8 +50,6 @@ public class MainActivity extends BaseActivity
     AppBarLayout mAppBarLayout;
     @BindView(R.id.indicator_spring)
     SimplePagerIndicator mIndicator;
-    @Inject
-    ViewModelProvider.Factory viewModelFactory;
     private MainFragmentPagerAdapter<City> mAdapter;
     private List<City> mCities;
     private int mSelectItem = -1;
@@ -69,7 +58,6 @@ public class MainActivity extends BaseActivity
     protected void onCreate(Bundle savedInstanceState) {
         setTheme(R.style.AppTheme_NoActionBar);
         super.onCreate(savedInstanceState);
-        mViewModel = ViewModelProviders.of(this, viewModelFactory).get(WeatherViewModel.class);
 
         mMainViewPager.setPadding(0, UiUtil.getStatusBarHeight() + UiUtil.getActionBarHeight(), 0, 0);
         mAppBarLayout.setPadding(0, UiUtil.getStatusBarHeight(), 0, 0);
@@ -198,11 +186,6 @@ public class MainActivity extends BaseActivity
                 break;
             }
         }
-    }
-
-    @Override
-    public AndroidInjector<Fragment> supportFragmentInjector() {
-        return dispatchingAndroidInjector;
     }
 
     public static class MainFragmentPagerAdapter<T extends City> extends FragmentStatePagerAdapter {

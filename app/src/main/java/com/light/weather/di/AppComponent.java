@@ -3,6 +3,8 @@ package com.light.weather.di;
 import android.app.Application;
 
 import com.light.weather.App;
+import com.light.weather.di.module.ActivityModule;
+import com.light.weather.di.module.AppModule;
 
 import javax.inject.Singleton;
 

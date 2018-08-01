@@ -14,15 +14,24 @@
  * limitations under the License.
  */
 
-package com.light.weather.di;
+package com.light.weather.di.module;
 
-import com.light.weather.ui.weather.WeatherFragment;
+
+import com.light.weather.ui.main.MainActivity;
+import com.light.weather.ui.manage.ManageActivity;
+import com.light.weather.ui.search.SearchCityActivity;
 
 import dagger.Module;
 import dagger.android.ContributesAndroidInjector;
 
 @Module
-public abstract class FragmentBuildersModule {
+public abstract class ActivityModule {
+    @ContributesAndroidInjector(modules = FragmentBuildersModule.class)
+    abstract MainActivity contributeMainActivity();
+
     @ContributesAndroidInjector
-    abstract WeatherFragment contributeWeatherFragment();
+    abstract ManageActivity contributeManageActivity();
+
+    @ContributesAndroidInjector
+    abstract SearchCityActivity contributeSearchCityActivity();
 }

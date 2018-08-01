@@ -6,7 +6,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 
-import com.light.weather.ui.common.WeatherViewModel;
+import com.light.weather.viewmodel.WeatherViewModel;
 
 import butterknife.ButterKnife;
 import io.reactivex.disposables.CompositeDisposable;

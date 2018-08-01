@@ -6,11 +6,10 @@
     android:id="@+id/city_name_tv"
     style="?android:attr/textAppearanceSmall"
     android:layout_width="match_parent"
-    android:layout_height="32dp"
+    android:layout_height="wrap_content"
     android:layout_gravity="center"
     android:gravity="start|center_vertical"
-    android:paddingEnd="16dp"
-    android:paddingStart="16dp"
+    android:padding="9dp"
     android:textColor="@color/colorTextDark2nd"
     tools:text="深圳"/>
 

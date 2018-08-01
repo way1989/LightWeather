@@ -1,7 +1,5 @@
 package com.light.weather.ui.manage;
 
-import android.arch.lifecycle.ViewModelProvider;
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
@@ -11,6 +9,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -22,8 +21,8 @@ import com.light.weather.R;
 import com.light.weather.adapter.ManageAdapter;
 import com.light.weather.bean.City;
 import com.light.weather.bean.HeWeather;
-import com.light.weather.ui.base.BaseActivity;
-import com.light.weather.ui.common.WeatherViewModel;
+import com.light.weather.ui.base.BaseDagger2NonFragmentInjectorActivity;
+import com.light.weather.viewmodel.WeatherViewModel;
 import com.light.weather.ui.search.SearchCityActivity;
 import com.light.weather.util.AppConstant;
 import com.light.weather.util.RxSchedulers;
@@ -31,16 +30,13 @@ import com.light.weather.widget.SimpleListDividerDecorator;
 
 import java.util.List;
 
-import javax.inject.Inject;
-
 import butterknife.BindView;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
-import me.bakumon.statuslayoutmanager.library.StatusLayoutManager;
 
-public class ManageActivity extends BaseActivity {
+public class ManageActivity extends BaseDagger2NonFragmentInjectorActivity<WeatherViewModel> {
     public static final String EXTRA_DATA_CHANGED = "extra_data_changed";
     public static final String EXTRA_SELECTED_ITEM = "extra_selected_item";
     private static final String TAG = "ManageActivity";
@@ -48,22 +44,26 @@ public class ManageActivity extends BaseActivity {
     @BindView(R.id.recycler_view)
     RecyclerView mRecyclerView;
 
-    @Inject
-    ViewModelProvider.Factory viewModelFactory;
     private ManageAdapter mAdapter;
     private boolean mDataChanged;
     private int mSelectedItem = -1;
-    private StatusLayoutManager mStatusLayoutManager;
     private long mLastClickMenuTime;
+
+    protected View mLoadingView;
+    protected View mEmptyView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mViewModel = ViewModelProviders.of(this, viewModelFactory).get(WeatherViewModel.class);
         final ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
+
+        LayoutInflater inflater = getLayoutInflater();
+        mLoadingView = inflater.inflate(R.layout._loading_layout_loading, null);
+        mEmptyView = inflater.inflate(R.layout._loading_layout_empty, null);
+
         mAdapter = new ManageAdapter(R.layout.item_manage_city, null);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
         mRecyclerView.addItemDecoration(new SimpleListDividerDecorator(ContextCompat
@@ -136,10 +136,6 @@ public class ManageActivity extends BaseActivity {
             }
         });
 
-        mStatusLayoutManager = new StatusLayoutManager.Builder(mRecyclerView)
-                .setDefaultEmptyClickViewVisible(false)
-                .setDefaultErrorClickViewVisible(false)
-                .build();
         getCities();
     }
 
@@ -267,16 +263,16 @@ public class ManageActivity extends BaseActivity {
     }
 
     public void onCityChange(List<City> cities) {
-        if (cities != null && cities.size() > 0) {
-            mStatusLayoutManager.showSuccessLayout();
-        } else {
-            mStatusLayoutManager.showEmptyLayout();
-        }
         mAdapter.setNewData(cities);
+        if (cities != null && cities.size() > 0) {
+        } else {
+            mAdapter.setNewData(null);
+            mAdapter.setEmptyView(mEmptyView);
+        }
     }
 
     private void getCities() {
-        mStatusLayoutManager.showLoadingLayout();
+        mAdapter.setEmptyView(mLoadingView);
         mDisposable.add(mViewModel.getCities()
                 .compose(RxSchedulers.<List<City>>io_main())
                 .subscribe(new Consumer<List<City>>() {

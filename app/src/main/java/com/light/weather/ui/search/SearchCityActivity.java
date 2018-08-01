@@ -1,18 +1,16 @@
 package com.light.weather.ui.search;
 
-import android.arch.lifecycle.ViewModelProvider;
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -27,48 +25,41 @@ import com.light.weather.R;
 import com.light.weather.adapter.SearchAdapter;
 import com.light.weather.bean.City;
 import com.light.weather.bean.SearchItem;
-import com.light.weather.ui.base.BaseActivity;
-import com.light.weather.ui.common.WeatherViewModel;
+import com.light.weather.ui.base.BaseDagger2NonFragmentInjectorActivity;
+import com.light.weather.viewmodel.WeatherViewModel;
 import com.light.weather.util.AppConstant;
 import com.light.weather.util.RxSchedulers;
-import com.light.weather.widget.GridDividerItemDecoration;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import javax.inject.Inject;
 
 import butterknife.BindView;
 import io.reactivex.ObservableSource;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
-import me.bakumon.statuslayoutmanager.library.StatusLayoutManager;
 
-public class SearchCityActivity extends BaseActivity implements MenuItem.OnActionExpandListener, View.OnTouchListener {
+public class SearchCityActivity extends BaseDagger2NonFragmentInjectorActivity<WeatherViewModel> implements MenuItem.OnActionExpandListener, View.OnTouchListener {
     private static final String TAG = "SearchCityActivity";
     @BindView(R.id.recyclerview)
     RecyclerView mRecyclerView;
-    @Inject
-    ViewModelProvider.Factory viewModelFactory;
     private SearchAdapter mSearchAdapter;
     private SearchView mSearchView;
     private List<SearchItem> mDefaultItems;
-    private StatusLayoutManager mStatusLayoutManager;
+
+    protected View mLoadingView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mViewModel = ViewModelProviders.of(this, viewModelFactory).get(WeatherViewModel.class);
         final ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
-        mStatusLayoutManager = new StatusLayoutManager.Builder(mRecyclerView)
-                .setDefaultEmptyClickViewVisible(false)
-                .setDefaultErrorClickViewVisible(false)
-                .build();
+
+        LayoutInflater inflater = getLayoutInflater();
+        mLoadingView = inflater.inflate(R.layout._loading_layout_loading, null);
 
         mRecyclerView.setLayoutManager(new GridLayoutManager(this, 3));
         mRecyclerView.setOnTouchListener(this);
@@ -82,13 +73,14 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
             }
         });
         mRecyclerView.setAdapter(mSearchAdapter);
-        mRecyclerView.addItemDecoration(new GridDividerItemDecoration(1, ContextCompat.getColor(this, R.color.divider_color)));
+        //mRecyclerView.addItemDecoration(new GridDividerItemDecoration(1, ContextCompat.getColor(this, R.color.divider_color)));
 
         loadDefaultCities();
     }
 
     private void loadDefaultCities() {
-        mStatusLayoutManager.showLoadingLayout();
+        mSearchAdapter.setNewData(null);
+        mSearchAdapter.setEmptyView(mLoadingView);
         mDisposable.add(mViewModel.getDefaultCities()
                 .compose(RxSchedulers.<List<SearchItem>>io_main())
                 .subscribe(new Consumer<List<SearchItem>>() {
@@ -96,7 +88,6 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
                     public void accept(List<SearchItem> searchItems) throws Exception {
                         mDefaultItems = searchItems;
                         mSearchAdapter.setNewData(mDefaultItems);
-                        mStatusLayoutManager.showSuccessLayout();
                     }
                 }, new Consumer<Throwable>() {
                     @Override
@@ -148,7 +139,8 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
 
     private void search(String query) {
         if (!TextUtils.isEmpty(query) || !query.trim().equals("")) {
-            mStatusLayoutManager.showLoadingLayout();
+            mSearchAdapter.setNewData(null);
+            mSearchAdapter.setEmptyView(mLoadingView);
             mDisposable.add(mViewModel.search(query)
                     .compose(RxSchedulers.<List<City>>io_main())
                     .subscribe(new Consumer<List<City>>() {
@@ -180,7 +172,6 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
 
     public void onSearchResult(List<City> cities) {
         Log.d(TAG, "onSearchResult... cities = " + cities);
-        mStatusLayoutManager.showSuccessLayout();
         if (cities == null || cities.isEmpty()) {
             mSearchAdapter.setNewData(mDefaultItems);
         } else {
@@ -190,7 +181,6 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
 
     public void onSearchError(Throwable e) {
         Log.d(TAG, "onSearchError... e = " + e.getMessage());
-        mStatusLayoutManager.showSuccessLayout();
         mSearchAdapter.setNewData(mDefaultItems);
         if (BuildConfig.LOG_DEBUG)
             Snackbar.make(mRecyclerView, e.getMessage(), Snackbar.LENGTH_LONG).show();
@@ -216,7 +206,8 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
             return;
         }
         if (city.getIsLocation() == 1) {
-            mStatusLayoutManager.showLoadingLayout();
+            mSearchAdapter.setNewData(null);
+            mSearchAdapter.setEmptyView(mLoadingView);
             mDisposable.add(mViewModel.getLocation()
                     .concatMap(new Function<City, ObservableSource<List<SearchItem>>>() {
                         @Override
@@ -230,7 +221,6 @@ public class SearchCityActivity extends BaseActivity implements MenuItem.OnActio
                         public void accept(List<SearchItem> searchItems) throws Exception {
                             mDefaultItems = searchItems;
                             mSearchAdapter.setNewData(mDefaultItems);
-                            mStatusLayoutManager.showSuccessLayout();
                         }
                     }, new Consumer<Throwable>() {
                         @Override

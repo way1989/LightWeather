@@ -1,4 +1,4 @@
-package com.light.weather.di;
+package com.light.weather.di.module;
 
 import android.app.Application;
 import android.os.Environment;
@@ -36,7 +36,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
  * Created by android on 16-11-25.
  */
 @Module(includes = ViewModelModule.class)
-final class AppModule {
+public final class AppModule {
 
     @Provides
     @Singleton
