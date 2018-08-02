@@ -38,7 +38,6 @@
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:hardwareAccelerated="true"
             android:launchMode="singleTop"
-            android:label=""
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar.Splash"
             android:windowSoftInputMode="stateAlwaysHidden|adjustNothing">
