@@ -273,7 +273,7 @@ public class ManageActivity extends BaseDagger2NonFragmentInjectorActivity<Weath
 
     private void getCities() {
         mAdapter.setEmptyView(mLoadingView);
-        mDisposable.add(mViewModel.getCities()
+        mDisposable.add(mViewModel.getCities(true)
                 .compose(RxSchedulers.<List<City>>io_main())
                 .subscribe(new Consumer<List<City>>() {
                     @Override

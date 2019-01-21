@@ -13,6 +13,7 @@ import com.light.weather.api.ApiService;
 import com.light.weather.bean.City;
 import com.light.weather.bean.HeCity;
 import com.light.weather.bean.HeWeather;
+import com.light.weather.bean.HeWeather6;
 import com.light.weather.bean.HotCity;
 import com.light.weather.bean.SearchItem;
 import com.light.weather.data.IRepositoryManager;
@@ -37,6 +38,7 @@ import io.reactivex.ObservableSource;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
+import me.jessyan.retrofiturlmanager.RetrofitUrlManager;
 
 /**
  * Created by android on 18-1-29.
@@ -82,25 +84,26 @@ public class WeatherViewModel extends AndroidViewModel {
 
     public Observable<List<City>> search(String query) {
         return search(mRepositoryManager, query)
-                .map(new Function<HeCity, List<City>>() {
+                .map(new Function<HeWeather6, List<City>>() {
                     @Override
-                    public List<City> apply(HeCity heCity) throws Exception {
+                    public List<City> apply(HeWeather6 heCity) throws Exception {
                         Log.d(TAG, "searchCity... result heCity = " + heCity);
-                        ArrayList<City> cities = new ArrayList<>();
-                        if (heCity == null || !heCity.isOK())
-                            return cities;
-                        List<HeCity.HeWeather5Bean> beanList = heCity.getHeWeather5();
-                        for (HeCity.HeWeather5Bean bean : beanList) {
-                            if (TextUtils.equals(bean.getStatus(), "ok")) {
-                                HeCity.HeWeather5Bean.BasicBean basicBean = bean.getBasic();
-                                City city = new City(basicBean.getCity(), basicBean.getCnty(),
-                                        basicBean.getId(), basicBean.getLat(), basicBean.getLon(),
-                                        basicBean.getProv());
-                                cities.add(city);
-                            }
-                        }
-                        Log.d(TAG, "searchCity... end size = " + cities.size());
-                        return cities;
+//                        ArrayList<City> cities = new ArrayList<>();
+//                        if (heCity == null || !heCity.isOK())
+//                            return cities;
+//                        List<HeCity.HeWeather5Bean> beanList = heCity.getHeWeather5();
+//                        for (HeCity.HeWeather5Bean bean : beanList) {
+//                            if (TextUtils.equals(bean.getStatus(), "ok")) {
+//                                HeCity.HeWeather5Bean.BasicBean basicBean = bean.getBasic();
+//                                City city = new City(basicBean.getLocation(), basicBean.getCnty(),
+//                                        basicBean.getCid(), basicBean.getLat(), basicBean.getLon(),
+//                                        basicBean.getProv());
+//                                cities.add(city);
+//                            }
+//                        }
+//                        Log.d(TAG, "searchCity... end size = " + cities.size());
+//                        return cities;
+                        return null;
                     }
 
                 });
@@ -130,13 +133,13 @@ public class WeatherViewModel extends AndroidViewModel {
         });
     }
 
-    public Observable<List<City>> getCities() {
+    public Observable<List<City>> getCities(final boolean isManager) {
         return Observable.create(new ObservableOnSubscribe<List<City>>() {
             @Override
             public void subscribe(ObservableEmitter<List<City>> e) throws Exception {
                 CityDao cityDao = getDB(mRepositoryManager);
                 List<City> cities = cityDao.getCityAll();
-                if (cities.isEmpty()) {
+                if (!isManager && cities.isEmpty()) {
                     City city = new City();
                     city.setIsLocation(1);
                     city.setCity(MainActivity.UNKNOWN_CITY);
@@ -185,24 +188,24 @@ public class WeatherViewModel extends AndroidViewModel {
                     public ObservableSource<City> apply(String s) throws Exception {
                         Log.d(TAG, "getLocation flatMap: location = " + s);
                         return search(mRepositoryManager, s)
-                                .map(new Function<HeCity, City>() {
+                                .map(new Function<HeWeather6, City>() {
                                     @Override
-                                    public City apply(HeCity heCity) throws Exception {
+                                    public City apply(HeWeather6 heCity) throws Exception {
                                         Log.i(TAG, "getLocation map: heCity = " + heCity);
-                                        HeCity.HeWeather5Bean.BasicBean basicBean = heCity.getHeWeather5().get(0).getBasic();
-                                        City city = new City(basicBean.getCity(), basicBean.getCnty(),
-                                                basicBean.getId(), basicBean.getLat(), basicBean.getLon(), basicBean.getProv());
-                                        city.setIsLocation(1);
-                                        CityDao cityDao = getDB(mRepositoryManager);
-                                        final City exist = cityDao.getCityByLocation();
-                                        Log.d(TAG, "getLocation exist = " + exist);
-                                        if (exist == null) {
-                                            cityDao.insert(city);
-                                        } else if (!TextUtils.equals(exist.getAreaId(), city.getAreaId())) {
-                                            cityDao.delete(exist);
-                                            cityDao.insert(city);
-                                        }
-                                        return city;
+//                                        HeWeather6.HeWeather6Bean.BasicBean basicBean = heCity.getHeWeather6().get(0).getBasic();
+//                                        City city = new City(basicBean.getLocation(), basicBean.getCnty(),
+//                                                basicBean.getCid(), basicBean.getLat(), basicBean.getLon(), basicBean.getProv());
+//                                        city.setIsLocation(1);
+//                                        CityDao cityDao = getDB(mRepositoryManager);
+//                                        final City exist = cityDao.getCityByLocation();
+//                                        Log.d(TAG, "getLocation exist = " + exist);
+//                                        if (exist == null) {
+//                                            cityDao.insert(city);
+//                                        } else if (!TextUtils.equals(exist.getAreaId(), city.getAreaId())) {
+//                                            cityDao.delete(exist);
+//                                            cityDao.insert(city);
+//                                        }
+                                        return null;
                                     }
                                 });
                     }
@@ -214,7 +217,8 @@ public class WeatherViewModel extends AndroidViewModel {
                 CityDatabase.DATABASE_NAME).cityDao();
     }
 
-    private Observable<HeCity> search(IRepositoryManager repositoryManager, String query) {
+    private Observable<HeWeather6> search(IRepositoryManager repositoryManager, String query) {
+        RetrofitUrlManager.getInstance().fetchDomain(ApiService.DOMAIN_NAME_SEARCH);
         return repositoryManager.obtainRetrofitService(ApiService.class)
                 .searchCity(BuildConfig.HEWEATHER_KEY, query);
     }

@@ -16,21 +16,21 @@ public class HeCity {
      * status : ok
      */
 
-    private List<HeWeather5Bean> HeWeather5;
+    private List<HeWeather5Bean> HeWeather6;
 
     public List<HeWeather5Bean> getHeWeather5() {
-        return HeWeather5;
+        return HeWeather6;
     }
 
     public boolean isOK() {
-        return HeWeather5 != null && !HeWeather5.isEmpty() && TextUtils.equals("ok", HeWeather5.get(0).getStatus());
+        return HeWeather6 != null && !HeWeather6.isEmpty() && TextUtils.equals("ok", HeWeather6.get(0).getStatus());
     }
 
     @Override
     public String
     toString() {
         return "HeCity{" +
-                "HeWeather5=" + HeWeather5 +
+                "HeWeather5=" + HeWeather6 +
                 '}';
     }
 
@@ -67,70 +67,104 @@ public class HeCity {
         }
 
         public static class BasicBean {
-            private String city;
+            private String cid;
+            private String location;
+            private String parent_city;
+            private String admin_area;
             private String cnty;
-            private String id;
             private String lat;
             private String lon;
-            private String prov;
+            private String tz;
+            private String type;
 
-            public String getCity() {
-                return city;
+            public String getLocation() {
+                return location;
             }
 
-            public void setCity(String city) {
-                this.city = city;
+            public void setLocation(String city) {
+                this.location = city;
             }
 
             public String getCnty() {
                 return cnty;
             }
 
-            public void setCnty(String cnty) {
-                this.cnty = cnty;
-            }
-
-            public String getId() {
-                return id;
-            }
-
-            public void setId(String id) {
-                this.id = id;
+            public String getCid() {
+                return cid;
             }
 
             public String getLat() {
                 return lat;
             }
 
-            public void setLat(String lat) {
-                this.lat = lat;
-            }
-
             public String getLon() {
                 return lon;
+            }
+
+            public String getProv() {
+                return admin_area;
+            }
+
+            public void setCid(String cid) {
+                this.cid = cid;
+            }
+
+            public String getParent_city() {
+                return parent_city;
+            }
+
+            public void setParent_city(String parent_city) {
+                this.parent_city = parent_city;
+            }
+
+            public String getAdmin_area() {
+                return admin_area;
+            }
+
+            public void setAdmin_area(String admin_area) {
+                this.admin_area = admin_area;
+            }
+
+            public void setCnty(String cnty) {
+                this.cnty = cnty;
+            }
+
+            public void setLat(String lat) {
+                this.lat = lat;
             }
 
             public void setLon(String lon) {
                 this.lon = lon;
             }
 
-            public String getProv() {
-                return prov;
+            public String getTz() {
+                return tz;
             }
 
-            public void setProv(String prov) {
-                this.prov = prov;
+            public void setTz(String tz) {
+                this.tz = tz;
+            }
+
+            public String getType() {
+                return type;
+            }
+
+            public void setType(String type) {
+                this.type = type;
             }
 
             @Override
             public String toString() {
                 return "BasicBean{" +
-                        "city='" + city + '\'' +
+                        "cid='" + cid + '\'' +
+                        ", location='" + location + '\'' +
+                        ", parent_city='" + parent_city + '\'' +
+                        ", admin_area='" + admin_area + '\'' +
                         ", cnty='" + cnty + '\'' +
-                        ", id='" + id + '\'' +
                         ", lat='" + lat + '\'' +
                         ", lon='" + lon + '\'' +
-                        ", prov='" + prov + '\'' +
+                        ", tz='" + tz + '\'' +
+                        ", type='" + type + '\'' +
                         '}';
             }
         }

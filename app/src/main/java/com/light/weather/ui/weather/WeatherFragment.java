@@ -410,14 +410,8 @@ public class WeatherFragment extends BaseDagger2Fragment<WeatherViewModel> imple
     }
 
     private void getLocation() {
-        final Activity activity = getActivity();
-        Log.d(TAG, "getLocation: start... activity = " + activity);
-        if (activity == null) {
-            toast("activity is null when getLocation...");
-            return;
-        }
         updateRefreshStatus(true);
-        mDisposable.add(new RxPermissions(activity)
+        mDisposable.add(new RxPermissions(this)
                 .requestEachCombined(REQUEST_PERMISSIONS)
                 .observeOn(AndroidSchedulers.mainThread())
                 .concatMap(new Function<Permission, ObservableSource<City>>() {

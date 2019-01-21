@@ -84,7 +84,7 @@ public class RxLocation extends Observable<String> {
                 }
                 final double longitude = location.getLongitude();
                 final double latitude = location.getLatitude();
-                String coordinate = latitude + "," + longitude;
+                String coordinate = longitude + "," + latitude;
                 Log.d(TAG, "onLocationChanged: coordinate = " + coordinate + ", try times = " + mLocationCount);
                 mObserver.onNext(coordinate);
                 mObserver.onComplete();

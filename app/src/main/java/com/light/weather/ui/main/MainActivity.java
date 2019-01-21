@@ -154,7 +154,7 @@ public class MainActivity extends BaseDagger2Activity<WeatherViewModel>
 
     public void getCities() {
         Log.d(TAG, "getCities: start.... mViewModel = " + mViewModel);
-        mDisposable.add(mViewModel.getCities()
+        mDisposable.add(mViewModel.getCities(false)
                 .compose(RxSchedulers.<List<City>>io_main())
                 .subscribe(new Consumer<List<City>>() {
                     @Override

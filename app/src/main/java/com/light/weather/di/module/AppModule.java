@@ -8,6 +8,7 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.light.weather.BuildConfig;
+import com.light.weather.api.ApiService;
 import com.light.weather.data.IRepositoryManager;
 import com.light.weather.data.RepositoryManager;
 import com.light.weather.util.AppConstant;
@@ -22,6 +23,7 @@ import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
+import me.jessyan.retrofiturlmanager.RetrofitUrlManager;
 import okhttp3.Cache;
 import okhttp3.CacheControl;
 import okhttp3.Interceptor;
@@ -37,6 +39,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 @Module(includes = ViewModelModule.class)
 public final class AppModule {
+    private static final String TAG = "AppModule";
 
     @Provides
     @Singleton
@@ -56,7 +59,9 @@ public final class AppModule {
     @Provides
     @Singleton
     OkHttpClient provideOkHttpClient(Cache cache, Interceptor interceptor) {
-        return new OkHttpClient.Builder()
+        RetrofitUrlManager.getInstance().putDomain(ApiService.DOMAIN_NAME_WEATHER, ApiService.BASE_URL_WEATHER);
+        RetrofitUrlManager.getInstance().putDomain(ApiService.DOMAIN_NAME_SEARCH, ApiService.BASE_URL_SEARCH);
+        return RetrofitUrlManager.getInstance().with(new OkHttpClient.Builder())
                 .readTimeout(AppConstant.READ_TIMEOUT, TimeUnit.SECONDS)
                 .connectTimeout(AppConstant.CONN_TIMEOUT, TimeUnit.SECONDS)
                 .cache(cache)
@@ -83,26 +88,26 @@ public final class AppModule {
             public Response intercept(@NonNull Chain chain) throws IOException {
                 Request request = chain.request();
                 if (!DeviceUtil.hasInternet(application)) {
-                    Log.d("Interceptor", "intercept: not internet...");
+                    Log.d(TAG, "intercept: not internet...");
                     request = request.newBuilder()
                             .cacheControl(CacheControl.FORCE_CACHE)
                             .build();
                 }
                 Response response = chain.proceed(request);
                 if (DeviceUtil.isWifiOpen(application)) {
-                    Log.d("Interceptor", "intercept: is wifi...");
-                    final int maxAge = 0;
-                    // 有wifi时设置缓存超时时间0个小时
+                    Log.d(TAG, "intercept: is wifi...");
+                    // 有wifi时设置缓存超时时间10分钟
+                    final int maxAge = 60 * 10;
                     response.newBuilder()
                             .header("Cache-Control", "public, max-age=" + maxAge)
                             .removeHeader("Pragma")// 清除头信息，因为服务器如果不支持，会返回一些干扰信息，不清除下面无法生效
                             .build();
                 } else if (DeviceUtil.hasInternet(application)) {
-                    Log.d("Interceptor", "intercept: is 4G/3G/2G...");
-                    //数据流量时设置超时时间为5分钟
-                    final int maxStale = 60 * 5;
+                    Log.d(TAG, "intercept: is 4G/3G/2G...");
+                    //数据流量时设置超时时间为30分钟
+                    final int maxStale = 60 * 30;
                     response.newBuilder()
-                            .header("Cache-Control", "public, only-if-cached, max-stale=" + maxStale)
+                            .header("Cache-Control", "public, max-stale=" + maxStale)
                             .removeHeader("Pragma")
                             .build();
                 } else {
@@ -113,6 +118,15 @@ public final class AppModule {
                             .removeHeader("Pragma")
                             .build();
                 }
+
+                long t1 = System.nanoTime();
+                Log.d(TAG, String.format("Sending request %s on %s%n%s",
+                        request.url(), chain.connection(), request.headers()));
+
+                long t2 = System.nanoTime();
+                Log.d(TAG, String.format("Received response for %s in %.1fms%n%sconnection=%s",
+                        response.request().url(), (t2 - t1) / 1e6d, response.headers(), chain.connection()));
+
                 return response;
             }
         };
