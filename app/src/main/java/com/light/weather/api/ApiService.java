@@ -1,8 +1,9 @@
 package com.light.weather.api;
 
-import com.light.weather.bean.HeCity;
-import com.light.weather.bean.HeWeather;
-import com.light.weather.bean.HeWeather6;
+import com.light.weather.bean.BaseResponse;
+import com.light.weather.bean.HeBasic;
+
+import java.util.List;
 
 import io.reactivex.Observable;
 import retrofit2.http.GET;
@@ -21,24 +22,48 @@ public interface ApiService {
 
     String DOMAIN_NAME_WEATHER = "weather";
     String DOMAIN_NAME_SEARCH = "search";
-    /**
-     * @param key  用户认证key
-     * @param city 城市名称 city可通过城市中英文名称、ID和IP地址进行，例如city=北京，city=beijing，city=CN101010100，city=
-     *             60.194.130.1
-     * @param lang 多语言，默认为中文，可选参数
-     * @return 天气结果
-     */
-    @GET("weather?")
-    Observable<HeWeather> getWeather(@Query("key") String key, @Query("city") String city,
-                                     @Query("lang") String lang);
 
     /**
-     * @param key  用户认证key
-     * @param city 城市名称 city可通过城市中英文名称、ID和IP地址进行，例如city=北京，city=beijing，city=CN101010100，city=
-     *             60.194.130.1
+     * @param key      用户认证key
+     * @param location 输入需要查询的城市名称，支持模糊搜索，可输入中文（至少一个汉字）、英文（至少2个字母）、
+     *                 IP地址、坐标（经度在前纬度在后，英文,分割）、ADCode。
+     *                 location=北
+     *                 location=北京
+     *                 location=beij
+     *                 location=60.194.130.1
+     *                 location=116.4,39.1
      * @return 搜索到的城市结果
      */
-    @Headers({DOMAIN_NAME_HEADER + DOMAIN_NAME_WEATHER})
+    @Headers({DOMAIN_NAME_HEADER + DOMAIN_NAME_SEARCH})
     @GET("find?")
-    Observable<HeWeather6> searchCity(@Query("key") String key, @Query("location") String location);
+    Observable<BaseResponse<List<HeBasic>>> searchCity(@Query("key") String key, @Query("location") String location);
+
+    /**
+     * @param location 需要查询的城市或地区，可输入以下值：
+     *                 1. 城市ID：城市列表
+     *                 2. 经纬度格式：经度,纬度（经度在前纬度在后，英文,分隔，十进制格式，北纬东经为正，南纬西经为负
+     *                 3. 城市名称，支持中英文和汉语拼音
+     *                 4. 城市名称，上级城市 或 省 或 国家，英文,分隔，此方式可以在重名的情况下只获取想要的地区的天气数据，例如 西安,陕西
+     *                 5. IP
+     *                 6. 根据请求自动判断，根据用户的请求获取IP，通过 IP 定位并获取城市数据
+     *                 1. location=CN101010100
+     *                 2. location=116.40,39.9
+     *                 3. location=北京、 location=北京市、 location=beijing
+     *                 4. location=朝阳,北京、 location=chaoyang,beijing
+     *                 5. location=60.194.130.1
+     *                 6. location=auto_ip
+     * @param key      用户认证key
+     * @return
+     */
+    @Headers({DOMAIN_NAME_HEADER + DOMAIN_NAME_WEATHER})
+    @GET("weather?")
+    Observable<BaseResponse<HeBasic>> getWeather(@Query("location") String location, @Query("key") String key);
+
+    @Headers({DOMAIN_NAME_HEADER + DOMAIN_NAME_WEATHER})
+    @GET("air/now?")
+    Observable<BaseResponse<HeBasic>> getAqi(@Query("location") String location, @Query("key") String key);
+
+    @Headers({DOMAIN_NAME_HEADER + DOMAIN_NAME_WEATHER})
+    @GET("alarm?")
+    Observable<BaseResponse<HeBasic>> getAlarm(@Query("location") String location, @Query("key") String key);
 }

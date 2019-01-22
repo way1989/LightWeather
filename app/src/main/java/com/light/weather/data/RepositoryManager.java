@@ -1,10 +1,6 @@
 package com.light.weather.data;
 
 import android.app.Application;
-import android.arch.persistence.room.Room;
-import android.arch.persistence.room.RoomDatabase;
-
-import com.light.weather.util.Preconditions;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -48,31 +44,4 @@ public class RepositoryManager implements IRepositoryManager {
         return retrofitService;
     }
 
-
-    /**
-     * 清理所有缓存
-     */
-    @Override
-    public void clearAllCache() {
-        //mRxCache.get().evictAll();
-    }
-
-    @Override
-    public <DB extends RoomDatabase> DB obtainRoomDatabase(Class<DB> database, String dbName) {
-        Preconditions.checkNotNull(mRoomDatabaseCache, "Cannot return null from a Cache.Factory#build(int) method");
-        DB roomDatabase;
-        synchronized (mRoomDatabaseCache) {
-            roomDatabase = (DB) mRoomDatabaseCache.get(database.getName());
-            if (roomDatabase == null) {
-                RoomDatabase.Builder builder = Room.databaseBuilder(mApplication, database, dbName);
-                //自定义 Room 配置
-//                if (mRoomConfiguration != null) {
-//                    mRoomConfiguration.configRoom(mApplication, builder);
-//                }
-                roomDatabase = (DB) builder.build();
-                mRoomDatabaseCache.put(database.getName(), roomDatabase);
-            }
-        }
-        return roomDatabase;
-    }
 }

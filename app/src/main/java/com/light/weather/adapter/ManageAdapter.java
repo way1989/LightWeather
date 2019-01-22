@@ -9,8 +9,8 @@ import com.chad.library.adapter.base.BaseItemDraggableAdapter;
 import com.chad.library.adapter.base.BaseViewHolder;
 import com.light.weather.R;
 import com.light.weather.bean.City;
-import com.light.weather.util.FormatUtil;
 import com.light.weather.util.UiUtil;
+import com.light.weather.util.WeatherUtil;
 
 import java.util.List;
 
@@ -30,7 +30,7 @@ public class ManageAdapter extends BaseItemDraggableAdapter<City, BaseViewHolder
         TextView tvWeather = helper.getView(android.R.id.text2);
         ImageView tvIcon = helper.getView(android.R.id.icon);
         CharSequence name = item.getCity();
-        if (item.getIsLocation() == 1) {
+        if (item.isLocation()) {
             name = UiUtil.getNameWithIcon(item.getCity(),
                     ContextCompat.getDrawable(tvName.getContext(), R.drawable.ic_location_on_black_18dp));
             helper.getView(R.id.drag_handle).setAlpha(0.2f);
@@ -40,7 +40,7 @@ public class ManageAdapter extends BaseItemDraggableAdapter<City, BaseViewHolder
         // set text
         tvName.setText(name);
         tvWeather.setText(String.format("%s %s℃", item.getCodeTxt(), item.getTmp()));
-        tvIcon.setImageResource(FormatUtil.convertWeatherIcon(item.getCode()));
+        tvIcon.setImageResource(WeatherUtil.convertWeatherIcon(item.getCode()));
     }
 
 

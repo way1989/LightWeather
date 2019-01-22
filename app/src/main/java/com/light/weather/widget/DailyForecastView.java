@@ -12,8 +12,8 @@ import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.view.View;
 
-import com.light.weather.bean.HeWeather;
-import com.light.weather.util.FormatUtil;
+import com.light.weather.bean.HeWeather6;
+import com.light.weather.util.WeatherUtil;
 
 import java.util.List;
 
@@ -26,10 +26,9 @@ public class DailyForecastView extends View {
 
     private final float density;
     private final TextPaint paint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-    ;
     private int width, height;
     private float percent = 0f;
-    private List<HeWeather.HeWeather5Bean.DailyForecastBean> forecastList;
+    private List<HeWeather6.DailyForecastBean> forecastList;
     private Path tmpMaxPath = new Path();
     private Path tmpMinPath = new Path();
     //	private final float textSize;
@@ -127,7 +126,7 @@ public class DailyForecastView extends View {
             paint.setColor(0xFF62B1FF);
             canvas.drawText(d.tmp_min + "°", x[i], yMin[i] + textSize + textOffset, paint);
             paint.setColor(0xff424242);
-            canvas.drawText(FormatUtil.prettyDate(d.date), x[i], textSize * 13.5f + textOffset, paint);//日期d.date.substring(5)
+            canvas.drawText(WeatherUtil.prettyDate(d.date), x[i], textSize * 13.5f + textOffset, paint);//日期d.date.substring(5)
             canvas.drawText(d.cond_txt_d + "", x[i], textSize * 15f + textOffset, paint);//“晴"
             canvas.drawText(d.wind_sc, x[i], textSize * 16.5f + textOffset, paint);//微风
 
@@ -177,18 +176,14 @@ public class DailyForecastView extends View {
     }
     //private Rect rect = new Rect();
 
-    public void setData(HeWeather weather) {
-        if (weather == null || !weather.isOK()) {
-            return;
-        }
-
-        if (this.forecastList == weather.getWeather().getDaily_forecast()) {
+    public void setData(List<HeWeather6.DailyForecastBean> forecastList) {
+        if (this.forecastList == forecastList) {
             percent = 0f;
             invalidate();
             return;
         }
-        this.forecastList = weather.getWeather().getDaily_forecast();
-        if (forecastList == null && forecastList.size() == 0) {
+        this.forecastList = forecastList;
+        if (forecastList == null && forecastList.isEmpty()) {
             return;
         }
         // this.points = new PointF[forecastList.size()];
@@ -197,9 +192,9 @@ public class DailyForecastView extends View {
             int all_max = Integer.MIN_VALUE;
             int all_min = Integer.MAX_VALUE;
             for (int i = 0; i < forecastList.size(); i++) {
-                HeWeather.HeWeather5Bean.DailyForecastBean forecast = forecastList.get(i);
-                int max = Integer.valueOf(forecast.getTmp().getMax());
-                int min = Integer.valueOf(forecast.getTmp().getMin());
+                HeWeather6.DailyForecastBean forecast = forecastList.get(i);
+                int max = Integer.valueOf(forecast.getTmp_max());
+                int min = Integer.valueOf(forecast.getTmp_min());
                 if (all_max < max) {
                     all_max = max;
                 }
@@ -210,8 +205,8 @@ public class DailyForecastView extends View {
                 data.tmp_max = max;
                 data.tmp_min = min;
                 data.date = forecast.getDate();
-                data.wind_sc = forecast.getWind().getSc();
-                data.cond_txt_d = forecast.getCond().getTxt_d();
+                data.wind_sc = forecast.getWind_sc();
+                data.cond_txt_d = forecast.getCond_txt_d();
                 datas[i] = data;
             }
             float all_distance = Math.abs(all_max - all_min);

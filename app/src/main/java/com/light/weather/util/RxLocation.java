@@ -7,6 +7,7 @@ import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
+import com.light.weather.bean.City;
 
 import io.reactivex.Observable;
 import io.reactivex.Observer;
@@ -16,7 +17,7 @@ import io.reactivex.android.MainThreadDisposable;
  * Created by liweiping on 18-1-23.
  */
 
-public class RxLocation extends Observable<String> {
+public class RxLocation extends Observable<City> {
     private static final String TAG = "RxLocation";
     private static volatile RxLocation sInstance;
     private Application mApplication;
@@ -37,7 +38,7 @@ public class RxLocation extends Observable<String> {
     }
 
     @Override
-    protected void subscribeActual(Observer<? super String> observer) {
+    protected void subscribeActual(Observer<? super City> observer) {
         final AMapLocationClient locationClient = new AMapLocationClient(mApplication);
         locationClient.setLocationOption(getAMapLocationClientOption());
 
@@ -59,10 +60,10 @@ public class RxLocation extends Observable<String> {
     private static final class Listener extends MainThreadDisposable implements AMapLocationListener {
         private static final int MAX_NUM = 3;
         private final AMapLocationClient mMapLocationClient;
-        private final Observer<? super String> mObserver;
+        private final Observer<? super City> mObserver;
         private int mLocationCount;
 
-        Listener(AMapLocationClient locationHelper, Observer<? super String> observer) {
+        Listener(AMapLocationClient locationHelper, Observer<? super City> observer) {
             this.mMapLocationClient = locationHelper;
             this.mObserver = observer;
             this.mLocationCount = 1;
@@ -82,11 +83,13 @@ public class RxLocation extends Observable<String> {
                     }
                     return;
                 }
-                final double longitude = location.getLongitude();
-                final double latitude = location.getLatitude();
-                String coordinate = longitude + "," + latitude;
-                Log.d(TAG, "onLocationChanged: coordinate = " + coordinate + ", try times = " + mLocationCount);
-                mObserver.onNext(coordinate);
+                City city = new City(location.getDistrict(), location.getCountry(),
+                        String.format("%s,%s", location.getLongitude(), location.getLatitude()),
+                        String.valueOf(location.getLatitude()),
+                        String.valueOf(location.getLongitude()), location.getProvince());
+                city.setLocation(true);
+                Log.d(TAG, "onLocationChanged: city = " + city + ", try times = " + mLocationCount);
+                mObserver.onNext(city);
                 mObserver.onComplete();
                 dispose();
             }

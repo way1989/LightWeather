@@ -165,6 +165,7 @@
     </RelativeLayout>
 
     <View
+        android:id="@+id/divider_now_and_forecast"
         android:layout_width="match_parent"
         android:layout_height="@dimen/w_divider_size"
         android:background="@color/w_divider"/>

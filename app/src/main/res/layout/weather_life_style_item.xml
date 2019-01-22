@@ -1,19 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <merge xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!--  <TextView
-          style="@style/w_section_title"
-          android:text="@string/sun_and_wind_title"/>-->
-
-    <com.light.weather.widget.AstroView
-        android:id="@+id/w_astroView"
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/suggestion_recyclerView"
         android:layout_width="match_parent"
-        android:layout_height="144dp"
+        android:layout_height="match_parent"
         android:background="@android:color/white"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
         android:visibility="gone" />
 
     <View
-        android:id="@+id/divider_astro"
+        android:id="@+id/divider_suggestion"
         android:layout_width="match_parent"
         android:layout_height="@dimen/w_divider_size"
         android:background="@color/w_divider"

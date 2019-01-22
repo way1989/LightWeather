@@ -46,8 +46,8 @@ public class SearchAdapter extends BaseSectionQuickAdapter<SearchItem, BaseViewH
         }
         helper.itemView.setTag(city);
         cityName.setText(city.getCity());
-        if (city.getIsLocation() == 1) {
-            cityProv.setText(R.string.request_location);
+        if (city.isLocation()) {
+            cityProv.setText("");
         } else {
             cityProv.setText(city.getProv());
         }

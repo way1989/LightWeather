@@ -12,8 +12,8 @@ import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.view.View;
 
-import com.light.weather.bean.HeWeather;
-import com.light.weather.util.FormatUtil;
+import com.light.weather.bean.HeWeather6;
+import com.light.weather.util.WeatherUtil;
 
 import java.util.List;
 
@@ -29,7 +29,7 @@ public class HourlyForecastView extends View {
     private final DashPathEffect dashPathEffect;
     private final TextPaint paint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
     private int width, height;
-    private List<HeWeather.HeWeather5Bean.HourlyForecastBean> forecastList;
+    private List<HeWeather6.HourlyBean> forecastList;
     private Path tmpPath = new Path();
     private Path goneTmpPath = new Path();
     private Data[] datas;
@@ -151,34 +151,30 @@ public class HourlyForecastView extends View {
         if (needClip) {
             canvas.restore();
         }
-//		if (percent < 1) {
-//			percent += 1f / 40f;
-//			percent = Math.min(percent, 1f);
-//			ViewCompat.postInvalidateOnAnimation(this);
-//		}
+//        if (percent < 1) {
+//            percent += 1f / 40f;
+//            percent = Math.min(percent, 1f);
+//            this.postInvalidateOnAnimation();
+//        }
 
     }
 
-    public void setData(HeWeather weather) {
-        if (weather == null || !weather.isOK()) {
-            return;
-        }
-
-        if (this.forecastList == weather.getWeather().getHourly_forecast()) {
-//			percent = 0f;
+    public void setData(List<HeWeather6.HourlyBean> forecastList) {
+        if (this.forecastList == forecastList) {
+//            percent = 0f;
             invalidate();
             return;
         }
+        this.forecastList = forecastList;
         try {
-            final List<HeWeather.HeWeather5Bean.HourlyForecastBean> w_hourlyForecast = weather.getWeather().getHourly_forecast();
-            if (w_hourlyForecast.size() == 0) {// 有可能为空
+            if (forecastList == null || forecastList.isEmpty()) {// 有可能为空
                 return;
             }
-            if (!FormatUtil.isToday(w_hourlyForecast.get(0).getDate())) {// 不是今天的数据
+            if (!WeatherUtil.isToday(forecastList.get(0).getTime())) {// 不是今天的数据
                 return;
             }
-            this.forecastList = w_hourlyForecast;
-            if (forecastList.size() == 0) {
+            this.forecastList = forecastList;
+            if (forecastList.isEmpty()) {
                 return;
             }
             // this.points = new PointF[forecastList.size()];
@@ -186,7 +182,7 @@ public class HourlyForecastView extends View {
             int all_max = Integer.MIN_VALUE;
             int all_min = Integer.MAX_VALUE;
             for (int i = 0; i < forecastList.size(); i++) {
-                HeWeather.HeWeather5Bean.HourlyForecastBean forecast = forecastList.get(i);
+                HeWeather6.HourlyBean forecast = forecastList.get(i);
                 int tmp = Integer.valueOf(forecast.getTmp());
                 if (all_max < tmp) {
                     all_max = tmp;
@@ -196,8 +192,8 @@ public class HourlyForecastView extends View {
                 }
                 final Data data = new Data();
                 data.tmp = tmp;
-                data.date = forecast.getDate();
-                data.wind_sc = forecast.getWind().getSc();
+                data.date = forecast.getTime();
+                data.wind_sc = forecast.getWind_sc();
                 data.pop = forecast.getPop();
                 datas[i] = data;
             }
@@ -207,7 +203,7 @@ public class HourlyForecastView extends View {
             for (Data d : datas) {
                 d.offsetPercent = (d.tmp - average_distance) / all_distance;
             }
-//			percent = 0f;
+//            percent = 0f;
         } catch (Exception e) {
             e.printStackTrace();
         }

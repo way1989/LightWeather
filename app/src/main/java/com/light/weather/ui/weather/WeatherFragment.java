@@ -15,6 +15,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,20 +27,20 @@ import com.light.weather.adapter.AqiAdapter;
 import com.light.weather.adapter.SuggestionAdapter;
 import com.light.weather.bean.AqiDetailBean;
 import com.light.weather.bean.City;
-import com.light.weather.bean.HeWeather;
+import com.light.weather.bean.HeBasic;
+import com.light.weather.bean.HeWeather6;
 import com.light.weather.ui.base.BaseDagger2Fragment;
-import com.light.weather.viewmodel.WeatherViewModel;
-import com.light.weather.util.FormatUtil;
 import com.light.weather.util.RxSchedulers;
 import com.light.weather.util.ShareUtils;
 import com.light.weather.util.WeatherUtil;
+import com.light.weather.viewmodel.WeatherViewModel;
 import com.light.weather.widget.AqiView;
 import com.light.weather.widget.AstroView;
 import com.light.weather.widget.DailyForecastView;
 import com.light.weather.widget.HourlyForecastView;
 import com.light.weather.widget.dynamic.BaseWeatherType;
+import com.light.weather.widget.dynamic.DefaultType;
 import com.light.weather.widget.dynamic.ShortWeatherInfo;
-import com.light.weather.widget.dynamic.TypeUtil;
 import com.tbruyelle.rxpermissions2.Permission;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
@@ -49,7 +50,6 @@ import java.util.List;
 import butterknife.BindView;
 import io.reactivex.ObservableSource;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 
 /**
@@ -83,9 +83,22 @@ public class WeatherFragment extends BaseDagger2Fragment<WeatherViewModel> imple
 
     @BindView(R.id.aqi_recyclerview)
     RecyclerView mAqiRecyclerView;
+    @BindView(R.id.divider_now_and_forecast)
+    View mDividerNowAndForecast;
+    @BindView(R.id.divider_hourly_forecast)
+    View mDividerHourlyForecast;
+    @BindView(R.id.container_aqi)
+    RelativeLayout mContainerAqi;
+    @BindView(R.id.divider_aqi)
+    View mDividerAqi;
+    @BindView(R.id.divider_astro)
+    View mDividerAstro;
+    @BindView(R.id.divider_suggestion)
+    View mDividerSuggestion;
+    @BindView(R.id.bottom_title)
+    TextView mBottomTitle;
     private OnDrawerTypeChangeListener mListener;
     private City mCity;
-    private HeWeather mWeather;
     private SuggestionAdapter mSuggestionAdapter;
     private AqiAdapter mAqiAdapter;
     private long mLastClickMenuTime;
@@ -119,8 +132,9 @@ public class WeatherFragment extends BaseDagger2Fragment<WeatherViewModel> imple
                 if (System.currentTimeMillis() - mLastClickMenuTime > 2000L) {
                     Log.d(TAG, "onOptionsItemSelected: id = share...");
                     final Activity activity = getActivity();
-                    if (activity != null && mWeather != null && mWeather.isOK()) {
-                        final String shareInfo = WeatherUtil.getInstance().getShareMessage(mWeather);
+                    final HeWeather6 weather = getWeather();
+                    if (activity != null && weather != null) {
+                        final String shareInfo = WeatherUtil.getInstance().getShareMessage(weather);
                         ShareUtils.shareText(activity, shareInfo, getString(R.string.action_share));
                     }
                     mLastClickMenuTime = System.currentTimeMillis();
@@ -145,11 +159,11 @@ public class WeatherFragment extends BaseDagger2Fragment<WeatherViewModel> imple
     public void onResume() {
         super.onResume();
         Log.i(TAG, "onResume: .........");
-        if (getUserVisibleHint() && isDataDirty() && mCity != null) {
+        /*if (getUserVisibleHint() && isDataDirty() && mCity != null) {
             Log.i(TAG, "onResume: city = " + mCity.getCity()
                     + ", isDirty = " + isDataDirty());
-            getWeather(mCity, mCity.getIsLocation() == 1);
-        }
+            getWeather(mCity, mCity.isLocation());
+        }*/
     }
 
     @Override
@@ -157,18 +171,9 @@ public class WeatherFragment extends BaseDagger2Fragment<WeatherViewModel> imple
         return R.layout.fragment_weather;
     }
 
-    public void onWeatherChange(HeWeather weather) {
-        mWeather = weather;
-        updateWeatherUI();
-    }
-
     public void onLocationChange(City city) {
-        if (!TextUtils.equals(mCity.getAreaId(), city.getAreaId())) {
+        if (mListener != null) {
             mListener.updateLocationCity(city);
-        }
-        if (getUserVisibleHint()) {
-            mCity = city;
-            getWeather(city, false);
         }
     }
 
@@ -180,47 +185,82 @@ public class WeatherFragment extends BaseDagger2Fragment<WeatherViewModel> imple
             Log.e(TAG, "loadDataFirstTime: ", new Throwable("something is null..."));
             return;
         }
-        if (!TextUtils.isEmpty(mCity.getAreaId())) {
-            getWeather(mCity, mCity.getIsLocation() == 1);
-        } else if (mCity.getIsLocation() == 1) {
-            getLocation();
+        requestWeather();
+    }
+
+    private HeWeather6 getWeather() {
+        if (mRootView == null) {
+            return null;
         }
+        Object weather = mRootView.getTag();
+        if (!(weather instanceof HeWeather6)) {
+            return null;
+        }
+        return (HeWeather6) weather;
     }
 
     @Override
     public boolean isDataDirty() {
+        HeWeather6 weather = getWeather();
+        if (weather == null) {
+            return false;
+        }
         final boolean isDirty = mCity != null && !TextUtils.isEmpty(mCity.getAreaId())
-                && mWeather != null && mWeather.isOK()
-                && (System.currentTimeMillis() - mWeather.getUpdateTime() > WEATHER_DIRTY_TIME);
+                && (System.currentTimeMillis() - weather.getUpdateTime() > WEATHER_DIRTY_TIME);
         Log.v(TAG, "isDataDirty: " + isDirty + ", city = " + mCity);
         return isDirty;
     }
 
-    private void getWeather(City city, final boolean needLocation) {
-        Log.i(TAG, "getWeather... city = " + city + ", areaId = " + city.getAreaId());
+    private void getWeather(String areaId, final boolean isLocation) {
+        Log.i(TAG, "getWeather... areaId = " + areaId);
         updateRefreshStatus(true);
-        mDisposable.add(mViewModel.getWeather(city)
-                .compose(RxSchedulers.<HeWeather>io_main())
-                .subscribe(new Consumer<HeWeather>() {
-                    @Override
-                    public void accept(HeWeather heWeather) {
-                        Log.d(TAG, "getWeather: onNext weather isOK = " + heWeather.isOK());
-                        updateRefreshStatus(false);
-                        onWeatherChange(heWeather);
-                        Log.d(TAG, "getWeather: doAfterNext needLocation = " + needLocation);
-                        if (needLocation) {
-                            getLocation();
-                        }
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) {
-                        Log.e(TAG, "getWeather onError: ", throwable);
-                        updateRefreshStatus(false);
-                        toast(throwable.toString());
-                    }
-                }));
+        mDisposable.add(mViewModel.getWeather(areaId, isLocation)
+                .compose(RxSchedulers.io_main())
+                .subscribe(heWeather6 -> {
+                            Log.d(TAG, "getWeather: onNext heWeatherS6 = " + heWeather6);
+                            updateWeatherUI(heWeather6);
+                            getAqi(areaId);
+                            if (isLocation) {
+                                getLocation();
+                            }
+                        },
+                        throwable -> {
+                            Log.e(TAG, "getWeather: onError", throwable);
+                            updateWeatherUI(null);
+                            toast(throwable.getMessage());
+                        }));
+    }
 
+    private void getAqi(String areaId) {
+        mDisposable.add(mViewModel.getAqi(areaId)
+                .compose(RxSchedulers.io_main())
+                .subscribe(this::updateAqi, throwable ->
+                        Log.e(TAG, "getAqi: onError " + throwable.getMessage())));
+    }
+
+    private void updateAqi(HeWeather6.AqiBean aqiBean) {
+        Log.d(TAG, "updateAqi: aqi = " + aqiBean);
+        if (aqiBean != null) {
+            HeWeather6 weather = getWeather();
+            if (weather != null) {
+                weather.setAqi(aqiBean);
+                mRootView.setTag(weather);
+            }
+            mContainerAqi.setVisibility(View.VISIBLE);
+            mDividerAqi.setVisibility(View.VISIBLE);
+            mWAqiView.setAqi(weather.getAqi());
+            setAqiDetail(weather.getAqi());
+            final String qlty = weather.getAqi().getQlty();
+            if (TextUtils.isEmpty(qlty)) {
+                setTextViewString(R.id.w_now_cond_text, weather.getNow().getCond_txt());
+            } else {
+                setTextViewString(R.id.w_now_cond_text, weather.getNow().getCond_txt() + "\r\n" + qlty);
+            }
+        } else {
+            mContainerAqi.setVisibility(View.GONE);
+            mDividerAqi.setVisibility(View.GONE);
+            //setTextViewString(R.id.w_now_cond_text, weather.getNow().getCond_txt());
+        }
     }
 
     @Override
@@ -254,59 +294,63 @@ public class WeatherFragment extends BaseDagger2Fragment<WeatherViewModel> imple
         mWPullRefreshLayout.setOnRefreshListener(this);
 
         if (mWWeatherScrollView != null)
-            mWWeatherScrollView.post(new Runnable() {
-                @Override
-                public void run() {
-                    mWWeatherScrollView.scrollTo(0, 0);
-                }
-            });
+            mWWeatherScrollView.post(() -> mWWeatherScrollView.scrollTo(0, 0));
     }
 
     @Override
     public void onRefresh() {
+        requestWeather();
+    }
+
+    private void requestWeather() {
         if (!TextUtils.isEmpty(mCity.getAreaId())) {
-            getWeather(mCity, mCity.getIsLocation() == 1);
-        } else if (mCity.getIsLocation() == 1) {
+            getWeather(mCity.getAreaId(), mCity.isLocation());
+        } else if (mCity.isLocation()) {
             getLocation();
         }
     }
 
     public void updateRefreshStatus(final boolean refresh) {
-        mWPullRefreshLayout.post(new Runnable() {
-            @Override
-            public void run() {
-                mWPullRefreshLayout.setRefreshing(refresh);
-            }
-        });
+        mWPullRefreshLayout.post(() -> mWPullRefreshLayout.setRefreshing(refresh));
     }
 
     @Override
     public void setUserVisibleHint(boolean isVisibleToUser) {
         super.setUserVisibleHint(isVisibleToUser);
-        changeDynamicWeather(mWeather);
-    }
-
-    private void updateWeatherUI() {
-        final HeWeather weather = mWeather;
-        updateRefreshStatus(false);
-        if (weather == null || !weather.isOK()) {
+        if (!isVisibleToUser || mRootView == null) {
             return;
         }
-        mWeather.setUpdateTime(System.currentTimeMillis());
+        HeWeather6 weather = getWeather();
+        changeDynamicWeather(weather);
+    }
+
+    private void updateWeatherUI(HeWeather6<HeBasic> weather) {
+        updateRefreshStatus(false);
+        mRootView.setTag(weather);
+        if (weather == null) {
+            hideViews();
+            return;
+        }
+        weather.setUpdateTime(System.currentTimeMillis());
         try {
             changeDynamicWeather(weather);
 
-            HeWeather.HeWeather5Bean w = weather.getWeather();
-            mWDailyForecastView.setData(weather);
-            mWHourlyForecastView.setData(weather);
+            mWHourlyForecastView.setVisibility(View.VISIBLE);
+            mDividerHourlyForecast.setVisibility(View.VISIBLE);
+            mWAstroView.setVisibility(View.VISIBLE);
+            mDividerAstro.setVisibility(View.VISIBLE);
+
+            mWDailyForecastView.setData(weather.getDaily_forecast());
+            mWHourlyForecastView.setData(weather.getHourly());
             mWAstroView.setData(weather);
             View layoutNow = mRootView.findViewById(R.id.layout_now);
             View layoutDetails = mRootView.findViewById(R.id.layout_details);
 
-            setTextViewString(R.id.w_now_tmp, getString(R.string.weather_temp, w.getNow().getTmp()));
-            setTextViewString(R.id.tv_now_hum, w.getNow().getHum() + "%");// 湿度
-            setTextViewString(R.id.tv_now_vis, getString(R.string.weather_km, w.getNow().getVis()));// 能见度
-            setTextViewString(R.id.tv_now_pcpn, getString(R.string.weather_mm, w.getNow().getPcpn())); // 降雨量
+            setTextViewString(R.id.w_now_cond_text, weather.getNow().getCond_txt());
+            setTextViewString(R.id.w_now_tmp, getString(R.string.weather_temp, weather.getNow().getTmp()));
+            setTextViewString(R.id.tv_now_hum, weather.getNow().getHum() + "%");// 湿度
+            setTextViewString(R.id.tv_now_vis, getString(R.string.weather_km, weather.getNow().getVis()));// 能见度
+            setTextViewString(R.id.tv_now_pcpn, getString(R.string.weather_mm, weather.getNow().getPcpn())); // 降雨量
 
             layoutNow.setAlpha(0f);
             layoutDetails.setAlpha(0f);
@@ -318,81 +362,101 @@ public class WeatherFragment extends BaseDagger2Fragment<WeatherViewModel> imple
             TextView updateTextView = mRootView.findViewById(R.id.w_basic_update_loc);
             updateTextView.setAlpha(0f);
             updateTextView.animate().alpha(1f).setDuration(1000);
-            if (FormatUtil.isToday(w.getBasic().getUpdate().getLoc())) {
+            if (WeatherUtil.isToday(weather.getUpdate().getLoc())) {
                 setTextViewString(R.id.w_basic_update_loc,
-                        getString(R.string.weather_update, w.getBasic().getUpdate().getLoc().substring(11)));
+                        getString(R.string.weather_update, weather.getUpdate().getLoc().substring(11)));
             } else {
                 setTextViewString(R.id.w_basic_update_loc,
-                        getString(R.string.weather_update, w.getBasic().getUpdate().getLoc().substring(5)));
+                        getString(R.string.weather_update, weather.getUpdate().getLoc().substring(5)));
             }
 
-            if (weather.hasAqi()) {
-                mRootView.findViewById(R.id.divider_aqi).setVisibility(View.VISIBLE);
-                mRootView.findViewById(R.id.container_aqi).setVisibility(View.VISIBLE);
-                mWAqiView.setAqi(weather);
-                setAqiDetail(weather);
-                final String qlty = w.getAqi().getCity().getQlty();
+            //空气质量
+            /*if (weather.getAqi() != null) {
+                mContainerAqi.setVisibility(View.VISIBLE);
+                mDividerAqi.setVisibility(View.VISIBLE);
+                mWAqiView.setAqi(weather.getAqi());
+                setAqiDetail(weather.getAqi());
+                final String qlty = weather.getAqi().getQlty();
                 if (TextUtils.isEmpty(qlty)) {
-                    setTextViewString(R.id.w_now_cond_text, w.getNow().getCond().getTxt());
+                    setTextViewString(R.id.w_now_cond_text, weather.getNow().getCond_txt());
                 } else {
-                    setTextViewString(R.id.w_now_cond_text, w.getNow().getCond().getTxt() + "\r\n" + qlty);
+                    setTextViewString(R.id.w_now_cond_text, weather.getNow().getCond_txt() + "\r\n" + qlty);
                 }
-
             } else {
-                mRootView.findViewById(R.id.divider_aqi).setVisibility(View.GONE);
-                mRootView.findViewById(R.id.container_aqi).setVisibility(View.GONE);
-                setTextViewString(R.id.w_now_cond_text, w.getNow().getCond().getTxt());
-            }
-            if (weather.hasSuggestion()) {
-                mRootView.findViewById(R.id.divider_suggestion).setVisibility(View.VISIBLE);
+                mContainerAqi.setVisibility(View.GONE);
+                mDividerAqi.setVisibility(View.GONE);
+                setTextViewString(R.id.w_now_cond_text, weather.getNow().getCond_txt());
+            }*/
+            //生活指数
+            if (weather.getLifestyle() != null) {
+                mDividerSuggestion.setVisibility(View.VISIBLE);
                 mSuggestionRecyclerView.setVisibility(View.VISIBLE);
                 setSuggestion(weather);
             } else {
-                mRootView.findViewById(R.id.divider_suggestion).setVisibility(View.GONE);
+                mDividerSuggestion.setVisibility(View.GONE);
                 mSuggestionRecyclerView.setVisibility(View.GONE);
             }
+            //底部标题
+            mBottomTitle.setVisibility(View.VISIBLE);
         } catch (Exception e) {
             toast(mCity.getCity() + " Error:" + e);
         }
     }
 
-    private void setAqiDetail(HeWeather weather) {
+    private void hideViews() {
+        mWHourlyForecastView.setVisibility(View.GONE);
+        mDividerHourlyForecast.setVisibility(View.GONE);
+        mContainerAqi.setVisibility(View.GONE);
+        mDividerAqi.setVisibility(View.GONE);
+        mWAstroView.setVisibility(View.GONE);
+        mDividerAstro.setVisibility(View.GONE);
+        mSuggestionRecyclerView.setVisibility(View.GONE);
+        mDividerSuggestion.setVisibility(View.GONE);
+        mBottomTitle.setVisibility(View.GONE);
+    }
+
+    private void setAqiDetail(HeWeather6.AqiBean weather) {
         List<AqiDetailBean> list = new ArrayList<>();
-        AqiDetailBean pm25 = new AqiDetailBean("PM2.5", "细颗粒物", weather.getWeather().getAqi().getCity().getPm25());
+        AqiDetailBean pm25 = new AqiDetailBean("PM2.5", "细颗粒物", weather.getPm25());
         list.add(pm25);
-        AqiDetailBean pm10 = new AqiDetailBean("PM10", "可吸入颗粒物", weather.getWeather().getAqi().getCity().getPm10());
+        AqiDetailBean pm10 = new AqiDetailBean("PM10", "可吸入颗粒物", weather.getPm10());
         list.add(pm10);
-        AqiDetailBean so2 = new AqiDetailBean("SO2", "二氧化硫", weather.getWeather().getAqi().getCity().getSo2());
+        AqiDetailBean so2 = new AqiDetailBean("SO2", "二氧化硫", weather.getSo2());
         list.add(so2);
-        AqiDetailBean no2 = new AqiDetailBean("NO2", "二氧化氮", weather.getWeather().getAqi().getCity().getNo2());
+        AqiDetailBean no2 = new AqiDetailBean("NO2", "二氧化氮", weather.getNo2());
         list.add(no2);
-        AqiDetailBean co = new AqiDetailBean("CO", "一氧化碳", weather.getWeather().getAqi().getCity().getCo());
+        AqiDetailBean co = new AqiDetailBean("CO", "一氧化碳", weather.getCo());
         list.add(co);
-        AqiDetailBean o3 = new AqiDetailBean("O3", "臭氧", weather.getWeather().getAqi().getCity().getO3());
+        AqiDetailBean o3 = new AqiDetailBean("O3", "臭氧", weather.getO3());
         list.add(o3);
         mAqiAdapter.setNewData(list);
     }
 
-    private void setSuggestion(HeWeather weather) {
-        mSuggestionAdapter.setNewData(WeatherUtil.getSuggestion(weather));
+    private void setSuggestion(HeWeather6<HeBasic> weather) {
+        mSuggestionAdapter.setNewData(weather.getLifestyle());
     }
 
-    private void changeDynamicWeather(HeWeather weather) {
-        if (getUserVisibleHint() && mWeather != null && mWeather.isOK()) {
-            BaseWeatherType type = TypeUtil.getType(getResources(), getShortWeatherInfo(weather));
+    private void changeDynamicWeather(HeWeather6<HeBasic> weather) {
+        if (isAdded() && getUserVisibleHint()) {
+            BaseWeatherType type;
+            if (weather != null) {
+                type = WeatherUtil.getType(getResources(), getShortWeatherInfo(weather));
+            } else {
+                type = new DefaultType(getResources());
+            }
             mListener.onDrawerTypeChange(type);
         }
     }
 
     @NonNull
-    private ShortWeatherInfo getShortWeatherInfo(HeWeather weather) {
+    private ShortWeatherInfo getShortWeatherInfo(HeWeather6<HeBasic> weather) {
         ShortWeatherInfo info = new ShortWeatherInfo();
-        info.setCode(weather.getWeather().getNow().getCond().getCode());
-        info.setWindSpeed(weather.getWeather().getNow().getWind().getSpd());
-        info.setSunrise(weather.getWeather().getDaily_forecast().get(0).getAstro().getSr());
-        info.setSunset(weather.getWeather().getDaily_forecast().get(0).getAstro().getSs());
-        info.setMoonrise(weather.getWeather().getDaily_forecast().get(0).getAstro().getMr());
-        info.setMoonset(weather.getWeather().getDaily_forecast().get(0).getAstro().getMs());
+        info.setCode(weather.getNow().getCond_code());
+        info.setWindSpeed(weather.getNow().getWind_spd());
+        info.setSunrise(weather.getDaily_forecast().get(0).getSr());
+        info.setSunset(weather.getDaily_forecast().get(0).getSs());
+        info.setMoonrise(weather.getDaily_forecast().get(0).getMr());
+        info.setMoonset(weather.getDaily_forecast().get(0).getMs());
         return info;
     }
 
@@ -410,35 +474,27 @@ public class WeatherFragment extends BaseDagger2Fragment<WeatherViewModel> imple
     }
 
     private void getLocation() {
-        updateRefreshStatus(true);
         mDisposable.add(new RxPermissions(this)
                 .requestEachCombined(REQUEST_PERMISSIONS)
                 .observeOn(AndroidSchedulers.mainThread())
-                .concatMap(new Function<Permission, ObservableSource<City>>() {
-                    @Override
-                    public ObservableSource<City> apply(Permission permission) throws Exception {
-                        if (!permission.granted) {
-                            throw new Exception(getString(R.string.permission_message));
-                        }
-                        return mViewModel.getLocation();
+                .concatMap((Function<Permission, ObservableSource<City>>) permission -> {
+                    if (!permission.granted) {
+                        throw new Exception(getString(R.string.permission_message));
                     }
+                    updateRefreshStatus(true);
+                    return mViewModel.getLocation();
                 })
-                .compose(RxSchedulers.<City>io_main())
-                .subscribe(new Consumer<City>() {
-                    @Override
-                    public void accept(City city) {
-                        Log.d(TAG, "requestLocation: onNext city = " + city);
-                        updateRefreshStatus(false);
-                        if (!TextUtils.equals(city.getAreaId(), mCity.getAreaId()))
-                            onLocationChange(city);
+                .compose(RxSchedulers.io_main())
+                .subscribe(city -> {
+                    Log.d(TAG, "requestLocation: onNext city = " + city.getCity() + ", mCity = " + mCity.getCity());
+                    updateRefreshStatus(false);
+                    if (!city.getCity().contains(mCity.getCity())) {
+                        onLocationChange(city);
                     }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) {
-                        Log.e(TAG, "requestLocation: onError ", throwable);
-                        updateRefreshStatus(false);
-                        toast(throwable.toString());
-                    }
+                }, throwable -> {
+                    Log.e(TAG, "requestLocation: onError ", throwable);
+                    updateRefreshStatus(false);
+                    toast(throwable.toString());
                 }));
     }
 

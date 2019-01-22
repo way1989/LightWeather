@@ -18,11 +18,11 @@ import com.jakewharton.rxbinding2.support.v7.widget.RxToolbar;
 import com.light.weather.R;
 import com.light.weather.bean.City;
 import com.light.weather.ui.base.BaseDagger2Activity;
-import com.light.weather.viewmodel.WeatherViewModel;
 import com.light.weather.ui.manage.ManageActivity;
 import com.light.weather.ui.weather.WeatherFragment;
 import com.light.weather.util.RxSchedulers;
 import com.light.weather.util.UiUtil;
+import com.light.weather.viewmodel.WeatherViewModel;
 import com.light.weather.widget.SimplePagerIndicator;
 import com.light.weather.widget.dynamic.BaseWeatherType;
 import com.light.weather.widget.dynamic.DynamicWeatherView;
@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
-import io.reactivex.functions.Consumer;
 
 
 public class MainActivity extends BaseDagger2Activity<WeatherViewModel>
@@ -82,12 +81,7 @@ public class MainActivity extends BaseDagger2Activity<WeatherViewModel>
         mToolbar.setNavigationIcon(R.drawable.ic_location_city);
         mDisposable.add(RxToolbar.navigationClicks(mToolbar)
                 .throttleFirst(1, TimeUnit.SECONDS)
-                .subscribe(new Consumer<Object>() {
-                    @Override
-                    public void accept(Object o) throws Exception {
-                        startActivityForResult(new Intent(MainActivity.this, ManageActivity.class), REQUEST_CODE_CITY);
-                    }
-                }));
+                .subscribe(o -> startActivityForResult(new Intent(MainActivity.this, ManageActivity.class), REQUEST_CODE_CITY)));
     }
 
     @Override
@@ -155,19 +149,12 @@ public class MainActivity extends BaseDagger2Activity<WeatherViewModel>
     public void getCities() {
         Log.d(TAG, "getCities: start.... mViewModel = " + mViewModel);
         mDisposable.add(mViewModel.getCities(false)
-                .compose(RxSchedulers.<List<City>>io_main())
-                .subscribe(new Consumer<List<City>>() {
-                    @Override
-                    public void accept(List<City> cities) {
-                        updateAdapter(cities);
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) throws Exception {
-                        Toast.makeText(getApplicationContext(), "getCities onError: " + throwable, Toast.LENGTH_LONG).show();
-                        Log.e(TAG, "getCities onError: ", throwable);
-                    }
-                }));
+                .compose(RxSchedulers.io_main())
+                .subscribe(cities -> updateAdapter(cities),
+                        throwable -> {
+                            Toast.makeText(getApplicationContext(), "getCities onError: " + throwable, Toast.LENGTH_LONG).show();
+                            Log.e(TAG, "getCities onError: ", throwable);
+                        }));
     }
 
     @Override
@@ -178,7 +165,7 @@ public class MainActivity extends BaseDagger2Activity<WeatherViewModel>
     @Override
     public void updateLocationCity(City city) {
         for (int i = 0; i < mCities.size(); i++) {
-            if (mCities.get(i).getIsLocation() == 1) {
+            if (mCities.get(i).isLocation()) {
                 Log.d(TAG, "updateLocationCity: city = " + city + ", location city index = " + i);
                 mCities.set(i, city);
                 mAdapter.setNewData(mCities);

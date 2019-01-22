@@ -17,7 +17,7 @@ import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 
-import com.light.weather.bean.HeWeather;
+import com.light.weather.bean.HeWeather6;
 import com.light.weather.util.UiUtil;
 
 
@@ -38,7 +38,7 @@ public class AqiView extends View {
     private int textColor; //文字颜色
     private float textSize; //文字大小
     private float roundWidth = 28; //圆环宽度
-    private HeWeather.HeWeather5Bean.AqiBean.CityBean aqi;
+    private HeWeather6.AqiBean aqi;
     private Shader shader;
     private float speed;
     private int[] aqiColors = new int[]{
@@ -187,11 +187,11 @@ public class AqiView extends View {
         setMeasuredDimension(width, height);
     }
 
-    public void setAqi(HeWeather weather) {
+    public void setAqi(HeWeather6.AqiBean weather) {
         if (weather == null || !canRefresh) {
             return;
         }
-        this.aqi = weather.getWeather().getAqi().getCity();
+        this.aqi = weather;
         int apiValue = Integer.parseInt(aqi.getAqi());
         int targetColor;
         if (apiValue <= 50) {

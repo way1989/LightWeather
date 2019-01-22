@@ -5,6 +5,7 @@ import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import com.facebook.stetho.okhttp3.StethoInterceptor;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.light.weather.BuildConfig;
@@ -66,6 +67,7 @@ public final class AppModule {
                 .connectTimeout(AppConstant.CONN_TIMEOUT, TimeUnit.SECONDS)
                 .cache(cache)
                 .addInterceptor(interceptor)
+                .addNetworkInterceptor(new StethoInterceptor())
                 .build();//初始化一个client,不然retrofit会自己默认添加一个
     }
 
@@ -75,7 +77,7 @@ public final class AppModule {
         return new Retrofit.Builder()
                 .client(client)//添加一个client,不然retrofit会自己默认添加一个
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-                .baseUrl(BuildConfig.HEWEATHER_URL)
+                .baseUrl(BuildConfig.BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .build();
     }

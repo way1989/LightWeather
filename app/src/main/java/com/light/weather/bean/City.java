@@ -1,37 +1,25 @@
 package com.light.weather.bean;
 
-import android.arch.persistence.room.ColumnInfo;
-import android.arch.persistence.room.Entity;
-import android.arch.persistence.room.PrimaryKey;
-import android.support.annotation.NonNull;
-
 import java.io.Serializable;
 
 
 /**
  * Created by android on 16-11-10.
  */
-@Entity(tableName = "city")
 public class City implements Serializable {
     private static final long serialVersionUID = -1233425412975945445L;
     private String city;
     private String country;
-    @NonNull
-    @PrimaryKey()
     private String areaId;
-    @ColumnInfo(name = "latitude")
     private String lat;
-    @ColumnInfo(name = "longitude")
     private String lon;
-    @ColumnInfo(name = "province")
     private String prov;
-    protected int isLocation;
-    @ColumnInfo(name = "orderIndex")
-    protected int index;
+    private boolean isLocation;
+    private int index;
 
-    protected String codeTxt;
-    protected String code;
-    protected String tmp;
+    private String codeTxt;
+    private String code;
+    private String tmp;
 
     public City() {
 
@@ -61,7 +49,7 @@ public class City implements Serializable {
         this.tmp = tmp;
     }
 
-    public City(String city, String country, @NonNull String id, String lat, String lon, String prov) {
+    public City(String city, String country, String id, String lat, String lon, String prov) {
         this.city = city;
         this.country = country;
         this.areaId = id;
@@ -118,11 +106,11 @@ public class City implements Serializable {
         this.prov = prov;
     }
 
-    public int getIsLocation() {
+    public boolean isLocation() {
         return isLocation;
     }
 
-    public void setIsLocation(int isLocation) {
+    public void setLocation(boolean isLocation) {
         this.isLocation = isLocation;
     }
 
@@ -145,7 +133,9 @@ public class City implements Serializable {
                 ", prov='" + prov + '\'' +
                 ", isLocation=" + isLocation +
                 ", index=" + index +
+                ", codeTxt='" + codeTxt + '\'' +
+                ", code='" + code + '\'' +
+                ", tmp='" + tmp + '\'' +
                 '}';
     }
-
 }

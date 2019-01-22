@@ -14,27 +14,22 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.callback.ItemDragAndSwipeCallback;
 import com.chad.library.adapter.base.listener.OnItemDragListener;
 import com.light.weather.R;
 import com.light.weather.adapter.ManageAdapter;
 import com.light.weather.bean.City;
-import com.light.weather.bean.HeWeather;
 import com.light.weather.ui.base.BaseDagger2NonFragmentInjectorActivity;
-import com.light.weather.viewmodel.WeatherViewModel;
 import com.light.weather.ui.search.SearchCityActivity;
 import com.light.weather.util.AppConstant;
 import com.light.weather.util.RxSchedulers;
+import com.light.weather.viewmodel.WeatherViewModel;
 import com.light.weather.widget.SimpleListDividerDecorator;
 
 import java.util.List;
 
 import butterknife.BindView;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.functions.Consumer;
-import io.reactivex.functions.Function;
-import io.reactivex.schedulers.Schedulers;
 
 public class ManageActivity extends BaseDagger2NonFragmentInjectorActivity<WeatherViewModel> {
     public static final String EXTRA_DATA_CHANGED = "extra_data_changed";
@@ -117,22 +112,19 @@ public class ManageActivity extends BaseDagger2NonFragmentInjectorActivity<Weath
             }
         });
 
-        mAdapter.setOnItemChildClickListener(new BaseQuickAdapter.OnItemChildClickListener() {
-            @Override
-            public void onItemChildClick(BaseQuickAdapter adapter, View view, int position) {
-                City city = mAdapter.getItem(position);
-                Log.d(TAG, "onItemClick: city = " + city);
-                switch (view.getId()) {
-                    case R.id.content:
-                        mSelectedItem = position;
-                        onBackPressed();
-                        break;
-                    case R.id.right:
-                        mDataChanged = true;
-                        mAdapter.remove(position);
-                        onItemRemoved(city);
-                        break;
-                }
+        mAdapter.setOnItemChildClickListener((adapter, view, position) -> {
+            City city = mAdapter.getItem(position);
+            Log.d(TAG, "onItemClick: city = " + city);
+            switch (view.getId()) {
+                case R.id.content:
+                    mSelectedItem = position;
+                    onBackPressed();
+                    break;
+                case R.id.right:
+                    mDataChanged = true;
+                    mAdapter.remove(position);
+                    onItemRemoved(city);
+                    break;
             }
         });
 
@@ -173,37 +165,20 @@ public class ManageActivity extends BaseDagger2NonFragmentInjectorActivity<Weath
     private void onItemSwap() {
         final List<City> data = mAdapter.getData();
         mDisposable.add(mViewModel.swapCity(data)
-                .compose(RxSchedulers.<Boolean>io_main())
-                .subscribe(new Consumer<Boolean>() {
-                    @Override
-                    public void accept(Boolean result) throws Exception {
-                        Log.d(TAG, "accept: onItemSwap result = " + result);
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) throws Exception {
-                        Log.e(TAG, "accept: onItemSwap...", throwable);
-                    }
-                }));
+                .compose(RxSchedulers.io_main())
+                .subscribe(result -> Log.d(TAG, "accept: onItemSwap result = " + result),
+                        throwable -> Log.e(TAG, "accept: onItemSwap...", throwable)));
     }
 
     public void onItemRemoved(final City city) {
         mDisposable.add(mViewModel.deleteCity(city)
-                .compose(RxSchedulers.<Boolean>io_main())
-                .subscribe(new Consumer<Boolean>() {
-                    @Override
-                    public void accept(Boolean result) throws Exception {
-                        Snackbar.make(mRecyclerView, city.getCity() + " 删除成功!",
-                                Snackbar.LENGTH_LONG).show();
-                        Log.d(TAG, "accept: onItemRemoved city = " + city.getCity()
-                                + " result = " + result);
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) throws Exception {
-                        Log.e(TAG, "accept: onItemRemoved...", throwable);
-                    }
-                }));
+                .compose(RxSchedulers.io_main())
+                .subscribe(result -> {
+                    Snackbar.make(mRecyclerView, city.getCity() + " 删除成功!",
+                            Snackbar.LENGTH_LONG).show();
+                    Log.d(TAG, "accept: onItemRemoved city = " + city.getCity()
+                            + " result = " + result);
+                }, throwable -> Log.e(TAG, "accept: onItemRemoved...", throwable)));
     }
 
     @Override
@@ -221,39 +196,28 @@ public class ManageActivity extends BaseDagger2NonFragmentInjectorActivity<Weath
 
     private void getWeather(final City city) {
         Log.i(TAG, "getWeather... city = " + city);
-        mDisposable.add(mViewModel.getWeather(city)
-                .map(new Function<HeWeather, City>() {
-                    @Override
-                    public City apply(HeWeather heWeather) throws Exception {
-                        Log.d(TAG, "getWeather: map weather isOK = " + heWeather.isOK());
-                        if (heWeather.isOK()) {
-                            String code = heWeather.getWeather().getNow().getCond().getCode();
-                            String codeTxt = heWeather.getWeather().getNow().getCond().getTxt();
-                            String tmp = heWeather.getWeather().getNow().getTmp();
-                            Log.d(TAG, "getWeather: codeTxt = " + codeTxt + ", code = " + code + ", tmp = " + tmp);
-                            city.setCode(code);
-                            city.setCodeTxt(codeTxt);
-                            city.setTmp(tmp);
-                            //mViewModel.updateSync(city);
-                        }
-                        return city;
+        mDisposable.add(mViewModel.getWeather(city.getAreaId(), city.isLocation())
+                .map(heWeather -> {
+                    Log.d(TAG, "getWeather: map weather isOK = " + heWeather);
+                    if (heWeather != null) {
+                        String code = heWeather.getNow().getCond_code();
+                        String codeTxt = heWeather.getNow().getCond_txt();
+                        String tmp = heWeather.getNow().getTmp();
+                        Log.d(TAG, "getWeather: codeTxt = " + codeTxt + ", code = " + code + ", tmp = " + tmp);
+                        city.setCode(code);
+                        city.setCodeTxt(codeTxt);
+                        city.setTmp(tmp);
+                        //mViewModel.updateSync(city);
                     }
+                    return city;
                 })
-                .subscribeOn(Schedulers.io())
+                .subscribeOn(RxSchedulers.SCHEDULER)
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Consumer<City>() {
-                    @Override
-                    public void accept(City city1) throws Exception {
-                        Log.d(TAG, "getWeather: onNext weather city1 = " + city1);
-                        mAdapter.remove(mAdapter.getItemCount() - 1);
-                        mAdapter.addData(city1);
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) throws Exception {
-                        Log.e(TAG, "getWeather onError: ", throwable);
-                    }
-                }));
+                .subscribe(city1 -> {
+                    Log.d(TAG, "getWeather: onNext weather city1 = " + city1);
+                    mAdapter.remove(mAdapter.getItemCount() - 1);
+                    mAdapter.addData(city1);
+                }, throwable -> Log.e(TAG, "getWeather onError: ", throwable)));
 
     }
 
@@ -264,8 +228,7 @@ public class ManageActivity extends BaseDagger2NonFragmentInjectorActivity<Weath
 
     public void onCityChange(List<City> cities) {
         mAdapter.setNewData(cities);
-        if (cities != null && cities.size() > 0) {
-        } else {
+        if (cities == null || cities.isEmpty()) {
             mAdapter.setNewData(null);
             mAdapter.setEmptyView(mEmptyView);
         }
@@ -274,18 +237,9 @@ public class ManageActivity extends BaseDagger2NonFragmentInjectorActivity<Weath
     private void getCities() {
         mAdapter.setEmptyView(mLoadingView);
         mDisposable.add(mViewModel.getCities(true)
-                .compose(RxSchedulers.<List<City>>io_main())
-                .subscribe(new Consumer<List<City>>() {
-                    @Override
-                    public void accept(List<City> cities) throws Exception {
-                        onCityChange(cities);
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) throws Exception {
-                        Log.e(TAG, "accept: getCities ", throwable);
-                    }
-                }));
+                .compose(RxSchedulers.io_main())
+                .subscribe(cities -> onCityChange(cities),
+                        throwable -> Log.e(TAG, "accept: getCities ", throwable)));
     }
 
 }

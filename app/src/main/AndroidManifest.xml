@@ -59,6 +59,11 @@
             android:label=""
             android:windowSoftInputMode="stateAlwaysHidden|adjustNothing" />
 
+        <provider
+            android:name=".db.CityProvider"
+            android:exported="false"
+            android:authorities="com.light.weather.City" />
+
         <!--高德定位 -->
         <service android:name="com.amap.api.location.APSService" />
         <meta-data

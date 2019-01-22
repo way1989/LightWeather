@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.v4.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                                              android:id="@+id/w_PullRefreshLayout"
-                                              android:layout_width="match_parent"
-                                              android:layout_height="match_parent">
+    android:id="@+id/w_PullRefreshLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
     <ScrollView
         android:id="@+id/w_WeatherScrollView"
@@ -17,79 +17,32 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-            <!-- 当前天气与预报-->
-            <include layout="@layout/weather_now_and_forecast_item"/>
+            <!--当前天气与预报-->
+            <include layout="@layout/weather_now_and_forecast_item" />
 
-            <!--24h预报 -->
-            <include
-                android:id="@+id/hours_forecast_item"
-                layout="@layout/weather_hours_forecast_item"/>
+            <!--24h预报-->
+            <include layout="@layout/weather_hours_forecast_item" />
 
-            <!-- 空气质量 -->
-            <RelativeLayout
-                android:id="@+id/container_aqi"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@android:color/white"
-                android:paddingEnd="8dp"
-                android:paddingStart="8dp"
-                android:paddingBottom="16dp"
-                android:paddingTop="16dp">
+            <!--空气质量-->
+            <include layout="@layout/weather_aqi_item" />
 
-                <com.light.weather.widget.AqiView
-                    android:id="@+id/w_aqi_view"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentStart="true"
-                    android:layout_centerVertical="true"/>
+            <!--太阳和风速-->
+            <include layout="@layout/weather_astro_item" />
 
-                <android.support.v7.widget.RecyclerView
-                    android:id="@+id/aqi_recyclerview"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_toEndOf="@+id/w_aqi_view"/>
+            <!--生活指数-->
+            <include layout="@layout/weather_life_style_item" />
 
-            </RelativeLayout>
-
-            <View
-                android:id="@+id/divider_aqi"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/w_divider_size"
-                android:background="@color/w_divider"/>
-            <!--  <include
-                  android:id="@+id/air_quality_item"
-                  layout="@layout/weather_air_quality_item"/>-->
-            <!-- 太阳和风速 -->
-            <include
-                android:id="@+id/astro_item"
-                layout="@layout/weather_astro_item"/>
-
-            <!--生活指数 -->
-            <android.support.v7.widget.RecyclerView
-                android:id="@+id/suggestion_recyclerView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@android:color/white"
-                android:paddingBottom="8dp"
-                android:paddingTop="8dp"
-                />
-            <!--  <include
-                  android:id="@+id/index_item"
-                  layout="@layout/weather_index_item"/>-->
-            <View
-                android:id="@+id/divider_suggestion"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/w_divider_size"
-                android:background="@color/w_divider"/>
-
+            <!--底部标题-->
             <TextView
+                android:id="@+id/bottom_title"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
                 android:background="@android:color/white"
                 android:gravity="center"
                 android:text="@string/weather_source_title"
                 android:textColor="@color/w_text_secondary"
-                android:textSize="12sp"/>
+                android:textSize="12sp"
+                android:visibility="gone" />
         </com.light.weather.widget.FirstMatchInScrollViewLinearLayout>
     </ScrollView>
 

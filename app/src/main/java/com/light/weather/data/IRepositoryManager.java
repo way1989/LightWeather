@@ -1,7 +1,5 @@
 package com.light.weather.data;
 
-import android.arch.persistence.room.RoomDatabase;
-
 /**
  * ================================================
  * Created by JessYan on 17/03/2017 11:15
@@ -20,20 +18,4 @@ public interface IRepositoryManager {
      * @return
      */
     <T> T obtainRetrofitService(Class<T> service);
-
-
-    /**
-     * 清理所有缓存
-     */
-    void clearAllCache();
-
-    /**
-     * 根据传入的 Class 获取对应的 RxCache service
-     *
-     * @param database RoomDatabase Class
-     * @param <DB>     RoomDatabase
-     * @param dbName   RoomDatabase name
-     * @return RoomDatabase
-     */
-    <DB extends RoomDatabase> DB obtainRoomDatabase(Class<DB> database, String dbName);
 }

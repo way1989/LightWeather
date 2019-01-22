@@ -11,10 +11,11 @@ android {
         versionName VERSION_NAME
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "HEWEATHER_KEY", HEWEATHER_KEY
-        buildConfigField "String", "HEWEATHER_URL", HEWEATHER_FREE_URL
+        buildConfigField "String", "BASE_URL", BASE_URL
         buildConfigField "String", "APP_ID", APP_ID
         manifestPlaceholders = [amap_key: AMAP_KEY]
     }
+
     def filePrivateProperties = file("../jks/public.properties")
     if (filePrivateProperties.exists()) {
         signingConfigs {
@@ -28,6 +29,11 @@ android {
                 keyPassword propsPrivate['key.alias.password']
             }
         }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     applicationVariants.all { variant ->//获取 variant 参数，就是 productFlavor x buildType
@@ -73,8 +79,16 @@ dependencies {
     androidTestImplementation "com.android.support.test:runner:$rootProject.runnerVersion"
     androidTestImplementation "com.android.support.test.espresso:espresso-core:$rootProject.espressoVersion"
 
+    //android support
     implementation "com.android.support:appcompat-v7:$rootProject.supportLibraryVersion"
     implementation "com.android.support:design:$rootProject.supportLibraryVersion"
+
+    //swipe layout
+    implementation "com.github.anzaizai:EasySwipeMenuLayout:$rootProject.EasySwipeMenuLayout"
+
+    //RecyclerView Adapter Helper
+    implementation "com.github.CymChad:BaseRecyclerViewAdapterHelper:$rootProject.adapterHelperVersion"
+
     //butterknife
     implementation "com.jakewharton:butterknife:$rootProject.butterknifeVersion"
     annotationProcessor "com.jakewharton:butterknife-compiler:$rootProject.butterknifeVersion"
@@ -83,16 +97,24 @@ dependencies {
     implementation "io.reactivex.rxjava2:rxjava:$rootProject.rxjavaVersion"
     //rxandroid
     implementation "io.reactivex.rxjava2:rxandroid:$rootProject.rxandroidVersion"
+    //rxpermissions
+    implementation "com.github.tbruyelle:rxpermissions:$rootProject.rxpermissionsVersion"
+    //rxbinding
+    implementation "com.jakewharton.rxbinding2:rxbinding:$rootProject.rxbinding"
+    implementation "com.jakewharton.rxbinding2:rxbinding-appcompat-v7:$rootProject.rxbinding"
 
     //retrofit
     implementation "com.squareup.retrofit2:retrofit:$rootProject.retrofitVersion"
     implementation "com.squareup.retrofit2:adapter-rxjava2:$rootProject.retrofitVersion"
     implementation "com.squareup.retrofit2:converter-gson:$rootProject.retrofitVersion"
+    //retrofit-url-manager
+    implementation "me.jessyan:retrofit-url-manager:$rootProject.urlManager"
+    //facebook stetho for debug http
+    implementation "com.facebook.stetho:stetho-okhttp3:$rootProject.stetho"
 
     // Dagger dependencies
     implementation "com.google.dagger:dagger:$rootProject.daggerVersion"
     annotationProcessor "com.google.dagger:dagger-compiler:$rootProject.daggerVersion"
-
     implementation "com.google.dagger:dagger-android:$rootProject.daggerVersion"
     implementation "com.google.dagger:dagger-android-support:$rootProject.daggerVersion"
     // if you use the support libraries
@@ -103,39 +125,16 @@ dependencies {
     releaseImplementation "com.squareup.leakcanary:leakcanary-android-no-op:$rootProject.leakcanaryVersion"
     testImplementation "com.squareup.leakcanary:leakcanary-android-no-op:$rootProject.leakcanaryVersion"
 
-    //sqliteonweb
+    //sqlite on web
     debugImplementation "io.github.skyhacker2:sqliteonweb:$rootProject.sqliteonweb"
     releaseImplementation "io.github.skyhacker2:sqliteonweb-no-op:$rootProject.sqliteonweb"
 
     //高德定位
     implementation 'com.amap.api:location:latest.integration'
 
-    //rxbinding
-    implementation "com.jakewharton.rxbinding2:rxbinding:$rootProject.rxbinding"
-    implementation "com.jakewharton.rxbinding2:rxbinding-appcompat-v7:$rootProject.rxbinding"
-
-    //rxpermissions
-    implementation "com.github.tbruyelle:rxpermissions:$rootProject.rxpermissionsVersion"
-
-    implementation "com.github.CymChad:BaseRecyclerViewAdapterHelper:$rootProject.adapterHelperVersion"
+    //Tencent bugly 其中latest.release指代最新Bugly SDK版本号，也可以指定明确的版本号，例如2.2.0
+    implementation 'com.tencent.bugly:crashreport:latest.release'
 
     // ViewModel and LiveData
     implementation "android.arch.lifecycle:extensions:$rootProject.arch"
-    // alternatively, just ViewModel
-    //implementation "android.arch.lifecycle:viewmodel:$rootProject.arch"
-    // alternatively, just LiveData
-    //implementation "android.arch.lifecycle:livedata:$rootProject.arch"
-
-    // Room
-    implementation "android.arch.persistence.room:runtime:$rootProject.arch"
-    annotationProcessor "android.arch.persistence.room:compiler:$rootProject.arch"
-    // RxJava support for Room
-    //implementation "android.arch.persistence.room:rxjava2:$rootProject.arch"
-
-    implementation 'com.tencent.bugly:crashreport:latest.release'
-    //其中latest.release指代最新Bugly SDK版本号，也可以指定明确的版本号，例如2.2.0
-    implementation "com.github.anzaizai:EasySwipeMenuLayout:$rootProject.EasySwipeMenuLayout"
-
-    //retrofit-url-manager
-    implementation 'me.jessyan:retrofit-url-manager:1.4.0'
 }
