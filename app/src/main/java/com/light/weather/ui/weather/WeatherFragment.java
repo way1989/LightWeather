@@ -38,7 +38,7 @@ import com.light.weather.widget.AqiView;
 import com.light.weather.widget.AstroView;
 import com.light.weather.widget.DailyForecastView;
 import com.light.weather.widget.HourlyForecastView;
-import com.light.weather.widget.dynamic.BaseWeatherType;
+import com.light.weather.widget.dynamic.WeatherType;
 import com.light.weather.widget.dynamic.DefaultType;
 import com.light.weather.widget.dynamic.ShortWeatherInfo;
 import com.tbruyelle.rxpermissions2.Permission;
@@ -438,13 +438,11 @@ public class WeatherFragment extends BaseDagger2Fragment<WeatherViewModel> imple
 
     private void changeDynamicWeather(HeWeather6<HeBasic> weather) {
         if (isAdded() && getUserVisibleHint()) {
-            BaseWeatherType type;
+            WeatherType type = null;
             if (weather != null) {
                 type = WeatherUtil.getType(getResources(), getShortWeatherInfo(weather));
-            } else {
-                type = new DefaultType(getResources());
             }
-            mListener.onDrawerTypeChange(type);
+            mListener.onDrawerTypeChange(type == null ? new DefaultType(getResources()) : type);
         }
     }
 
@@ -499,7 +497,7 @@ public class WeatherFragment extends BaseDagger2Fragment<WeatherViewModel> imple
     }
 
     public interface OnDrawerTypeChangeListener {
-        void onDrawerTypeChange(BaseWeatherType type);
+        void onDrawerTypeChange(WeatherType type);
 
         void updateLocationCity(City city);
     }

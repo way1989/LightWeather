@@ -18,23 +18,23 @@ import java.lang.ref.WeakReference;
  * Created by liyu on 2017/8/16.
  */
 
-public class DynamicWeatherView extends TextureView implements TextureView.SurfaceTextureListener {
+public class WeatherView extends TextureView implements TextureView.SurfaceTextureListener {
     private static final String TAG = "DynamicWeatherView";
     private int mFromColor;
     private DrawThread mDrawThread;
-    private BaseWeatherType mWeatherType;
+    private WeatherType mWeatherType;
     private int mViewWidth;
     private int mViewHeight;
 
-    public DynamicWeatherView(Context context) {
+    public WeatherView(Context context) {
         this(context, null);
     }
 
-    public DynamicWeatherView(Context context, AttributeSet attrs) {
+    public WeatherView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public DynamicWeatherView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public WeatherView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         mWeatherType = new DefaultType(context.getResources());
         setSurfaceTextureListener(this);
@@ -44,7 +44,7 @@ public class DynamicWeatherView extends TextureView implements TextureView.Surfa
         return mWeatherType.getWeatherColor();
     }
 
-    public void setType(final BaseWeatherType type) {
+    public void setType(final WeatherType type) {
         Log.i(TAG, "setType: mWeatherType = " + mWeatherType);
         if (mWeatherType != null) {
             mWeatherType.end();
@@ -131,7 +131,7 @@ public class DynamicWeatherView extends TextureView implements TextureView.Surfa
     private static class DrawThread extends Thread {
         private final Object mObject = new Object();
         private WeakReference<TextureView> mSurfaceHolderWeakReference;
-        private WeakReference<BaseWeatherType> mWeatherTypeWeakReference;
+        private WeakReference<WeatherType> mWeatherTypeWeakReference;
         private boolean mIsRunning = false;
         private boolean mSuspended = false;
 
@@ -139,7 +139,7 @@ public class DynamicWeatherView extends TextureView implements TextureView.Surfa
             mSurfaceHolderWeakReference = new WeakReference<>(holder);
         }
 
-        void setWeatherType(BaseWeatherType weatherType) {
+        void setWeatherType(WeatherType weatherType) {
             if (mWeatherTypeWeakReference != null) {
                 mWeatherTypeWeakReference.clear();
             }
@@ -184,7 +184,7 @@ public class DynamicWeatherView extends TextureView implements TextureView.Surfa
                     return;
                 }
                 TextureView holder = mSurfaceHolderWeakReference.get();
-                BaseWeatherType weatherType = mWeatherTypeWeakReference.get();
+                WeatherType weatherType = mWeatherTypeWeakReference.get();
                 if (holder == null || weatherType == null) {
                     continue;
                 }

@@ -26,29 +26,29 @@ import java.util.ArrayList;
  * Created by liyu on 2017/8/18.
  */
 
-public class SnowType extends BaseWeatherType {
+public class SnowType extends WeatherType {
 
     public static final int SNOW_LEVEL_1 = 20;//小雪级别
     public static final int SNOW_LEVEL_2 = 40;//中雪级别
     public static final int SNOW_LEVEL_3 = 60;//大到暴雪级别
-    private float transFactor;
-    private Bitmap bitmap;
-    private Matrix matrix;
+    private float mTransFactor;
+    private Bitmap mBitmap;
+    private Matrix mMatrix;
     private ArrayList<Snow> mSnows;
     private Paint mPaint;
-    private int snowLevel = SNOW_LEVEL_1;
+    private int mSnowLevel = SNOW_LEVEL_1;
 
     public SnowType(Resources resources, @SnowLevel int snowLevel) {
         super(resources);
         setWeatherColor(0xFF62B1FF);
-        this.snowLevel = snowLevel;
+        mSnowLevel = snowLevel;
         mPaint = new Paint();
         mPaint.setAntiAlias(true);
         mPaint.setColor(Color.WHITE);
         mPaint.setStrokeWidth(5);
         mSnows = new ArrayList<>();
-        matrix = new Matrix();
-        bitmap = BitmapFactory.decodeResource(resources, R.drawable.ic_snow_ground);
+        mMatrix = new Matrix();
+        mBitmap = BitmapFactory.decodeResource(resources, R.drawable.ic_snow_ground);
     }
 
     @Override
@@ -56,10 +56,10 @@ public class SnowType extends BaseWeatherType {
         clearCanvas(canvas);
         canvas.drawColor(mDynamicColor);
         mPaint.setAlpha(255);
-        matrix.reset();
-        matrix.postScale(0.25f, 0.25f);
-        matrix.postTranslate(transFactor, getHeight() - bitmap.getHeight() * 0.23f);
-        canvas.drawBitmap(bitmap, matrix, mPaint);
+        mMatrix.reset();
+        mMatrix.postScale(0.25f, 0.25f);
+        mMatrix.postTranslate(mTransFactor, getHeight() - mBitmap.getHeight() * 0.23f);
+        canvas.drawBitmap(mBitmap, mMatrix, mPaint);
         Snow snow;
         for (int i = 0; i < mSnows.size(); i++) {
             snow = mSnows.get(i);
@@ -79,12 +79,12 @@ public class SnowType extends BaseWeatherType {
     @Override
     public void generateElements() {
         mSnows.clear();
-        for (int i = 0; i < snowLevel; i++) {
+        for (int i = 0; i < mSnowLevel; i++) {
             Snow snow = new Snow(
                     getRandom(0, getWidth()),
                     getRandom(0, getHeight()),
                     getRandom(dp2px(1), dp2px(6)),
-                    getRandom(1, snowLevel / 12)
+                    getRandom(1, mSnowLevel / 12)
             );
             mSnows.add(snow);
         }
@@ -92,27 +92,21 @@ public class SnowType extends BaseWeatherType {
 
     @Override
     public void startAnimation(int fromColor) {
-        ValueAnimator backgroundColorAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), fromColor, mWeatherColor);
+        ValueAnimator backgroundColorAnimator = ValueAnimator.ofObject(new ArgbEvaluator(),
+                fromColor, mWeatherColor);
         backgroundColorAnimator.setInterpolator(new LinearInterpolator());
         backgroundColorAnimator.setDuration(1000);
         backgroundColorAnimator.setRepeatCount(0);
-        backgroundColorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                mDynamicColor = (int) animation.getAnimatedValue();
-            }
-        });
+        backgroundColorAnimator.addUpdateListener(animation ->
+                mDynamicColor = (int) animation.getAnimatedValue());
 
-        ValueAnimator animator = ValueAnimator.ofFloat(-bitmap.getWidth() * 0.25f, getWidth() - bitmap.getWidth() * 0.25f);
+        ValueAnimator animator = ValueAnimator.ofFloat(-mBitmap.getWidth() * 0.25f,
+                getWidth() - mBitmap.getWidth() * 0.25f);
         animator.setDuration(1000);
         animator.setRepeatCount(0);
         animator.setInterpolator(new OvershootInterpolator());
-        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                transFactor = (float) animation.getAnimatedValue();
-            }
-        });
+        animator.addUpdateListener(animation ->
+                mTransFactor = (float) animation.getAnimatedValue());
 
         mStartAnimatorSet = new AnimatorSet();
         mStartAnimatorSet.play(backgroundColorAnimator).with(animator);
@@ -121,16 +115,13 @@ public class SnowType extends BaseWeatherType {
 
     @Override
     public void endAnimation(AnimatorListenerAdapter listener) {
-        ValueAnimator animator = ValueAnimator.ofFloat(getWidth() - bitmap.getWidth() * 0.25f, getWidth());
+        ValueAnimator animator = ValueAnimator.ofFloat(getWidth() - mBitmap.getWidth() * 0.25f,
+                getWidth());
         animator.setDuration(END_ANIM_DURATION);
         animator.setRepeatCount(0);
         animator.setInterpolator(new AccelerateInterpolator());
-        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                transFactor = (float) animation.getAnimatedValue();
-            }
-        });
+        animator.addUpdateListener(animation ->
+                mTransFactor = (float) animation.getAnimatedValue());
 
         mEndAnimatorSet = new AnimatorSet();
         mEndAnimatorSet.play(animator);
@@ -142,10 +133,10 @@ public class SnowType extends BaseWeatherType {
 
     @IntDef({SNOW_LEVEL_1, SNOW_LEVEL_2, SNOW_LEVEL_3})
     @Retention(RetentionPolicy.SOURCE)
-    public @interface SnowLevel {
+    @interface SnowLevel {
     }
 
-    public static class Snow {
+    static class Snow {
         /**
          * 雪花 x 轴坐标
          */
@@ -163,7 +154,7 @@ public class SnowType extends BaseWeatherType {
          */
         int speed;
 
-        public Snow(int x, int y, int size, int speed) {
+        Snow(int x, int y, int size, int speed) {
             this.x = x;
             this.y = y;
             this.size = size;

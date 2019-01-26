@@ -13,9 +13,9 @@ import java.util.Random;
  * Created by liyu on 2017/8/16.
  */
 
-public abstract class BaseWeatherType implements WeatherHandler {
+public abstract class WeatherType implements IWeatherType {
     protected static final long START_ANIM_DURATION = 3000L;
-    protected static final long END_ANIM_DURATION = 1000L;
+    protected static final long END_ANIM_DURATION = 500L;
     protected int mWeatherColor;
     protected int mDynamicColor;
     protected AnimatorSet mStartAnimatorSet;
@@ -24,7 +24,7 @@ public abstract class BaseWeatherType implements WeatherHandler {
     private int mWidth;
     private int mHeight;
 
-    public BaseWeatherType(Resources resources) {
+    public WeatherType(Resources resources) {
         mResources = resources;
     }
 
@@ -51,13 +51,17 @@ public abstract class BaseWeatherType implements WeatherHandler {
 
     public void end() {
         if (mStartAnimatorSet != null) {
+            if (mStartAnimatorSet.isRunning()) {
+                mStartAnimatorSet.end();
+            }
             mStartAnimatorSet.removeAllListeners();
-            mStartAnimatorSet.cancel();
         }
 
         if (mEndAnimatorSet != null) {
+            if (mEndAnimatorSet.isRunning()) {
+                mEndAnimatorSet.end();
+            }
             mEndAnimatorSet.removeAllListeners();
-            mEndAnimatorSet.cancel();
         }
     }
 

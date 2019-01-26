@@ -32,7 +32,7 @@ import java.util.Arrays;
  * Created by liyu on 2017/8/17.
  */
 
-public class RainType extends BaseWeatherType {
+public class RainType extends WeatherType {
 
     public static final int RAIN_LEVEL_1 = 10;//小雨级别
     public static final int RAIN_LEVEL_2 = 20;//中雨级别
@@ -41,24 +41,24 @@ public class RainType extends BaseWeatherType {
     public static final int WIND_LEVEL_1 = 20;//小风
     public static final int WIND_LEVEL_2 = 30;//中风
     public static final int WIND_LEVEL_3 = 45;//大风
-    private float transFactor;
-    private Bitmap bitmap;
-    private Matrix matrix;
-    private Runnable flashRunnable;
-    private boolean isFlashing = false;
-    private boolean isSnowing = false;
+    private float mTransFactor;
+    private Bitmap mBitmap;
+    private Matrix mMatrix;
+    private Runnable mFlashRunnable;
+    private boolean mIsFlashing = false;
+    private boolean mIsSnowing = false;
     private ArrayList<Rain> mRains;
     private Paint mPaint;
-    private int rainLevel = RAIN_LEVEL_1;
-    private int windLevel = WIND_LEVEL_1;
+    private int mRainLevel = RAIN_LEVEL_1;
+    private int mWindLevel = WIND_LEVEL_1;
     private float mAnimatorValue;
-    private PathMeasure flashPathMeasure1;
+    private PathMeasure mFlashPathMeasure1;
     private float mFlashLength1;
     private Path mDstFlash1;
-    private PathMeasure flashPathMeasure2;
+    private PathMeasure mFlashPathMeasure2;
     private float mFlashLength2;
     private Path mDstFlash2;
-    private PathMeasure flashPathMeasure3;
+    private PathMeasure mFlashPathMeasure3;
     private float mFlashLength3;
     private Path mDstFlash3;
     private ArrayList<SnowType.Snow> mSnows;
@@ -67,8 +67,8 @@ public class RainType extends BaseWeatherType {
     public RainType(Resources resources, @RainLevel int rainLevel, @WindLevel int windLevel) {
         super(resources);
         setWeatherColor(0xFF6188DA);
-        this.rainLevel = rainLevel;
-        this.windLevel = windLevel;
+        mRainLevel = rainLevel;
+        mWindLevel = windLevel;
         mPaint = new Paint();
         mPaint.setAntiAlias(true);
         mPaint.setColor(Color.WHITE);
@@ -76,16 +76,16 @@ public class RainType extends BaseWeatherType {
         mPaint.setStyle(Paint.Style.STROKE);
         mRains = new ArrayList<>();
         mSnows = new ArrayList<>();
-        matrix = new Matrix();
-        bitmap = BitmapFactory.decodeResource(resources, R.drawable.ic_rain_ground);
+        mMatrix = new Matrix();
+        mBitmap = BitmapFactory.decodeResource(resources, R.drawable.ic_rain_ground);
         mDstFlash1 = new Path();
-        flashPathMeasure1 = new PathMeasure();
+        mFlashPathMeasure1 = new PathMeasure();
 
         mDstFlash2 = new Path();
-        flashPathMeasure2 = new PathMeasure();
+        mFlashPathMeasure2 = new PathMeasure();
 
         mDstFlash3 = new Path();
-        flashPathMeasure3 = new PathMeasure();
+        mFlashPathMeasure3 = new PathMeasure();
     }
 
     @Override
@@ -95,52 +95,55 @@ public class RainType extends BaseWeatherType {
         mPaint.setAlpha(255);
         mPaint.setStyle(Paint.Style.STROKE);
 
-        if (isFlashing && mAnimatorValue < 1) {
+        if (mIsFlashing && mAnimatorValue < 1) {
             float stop = mFlashLength1 * mAnimatorValue;
             mDstFlash1.reset();
-            flashPathMeasure1.getSegment(0, stop, mDstFlash1, true);
+            mFlashPathMeasure1.getSegment(0, stop, mDstFlash1, true);
             mPaint.setStrokeWidth(14 * (1 - mAnimatorValue));
             canvas.drawPath(mDstFlash1, mPaint);
 
             float stop2 = mFlashLength2 * mAnimatorValue;
             mDstFlash2.reset();
-            flashPathMeasure2.getSegment(0, stop2, mDstFlash2, true);
+            mFlashPathMeasure2.getSegment(0, stop2, mDstFlash2, true);
             mPaint.setStrokeWidth(14 * (1 - mAnimatorValue));
             canvas.drawPath(mDstFlash2, mPaint);
 
             float stop3 = mFlashLength3 * mAnimatorValue;
             mDstFlash3.reset();
-            flashPathMeasure3.getSegment(0, stop3, mDstFlash3, true);
+            mFlashPathMeasure3.getSegment(0, stop3, mDstFlash3, true);
             mPaint.setStrokeWidth(14 * (1 - mAnimatorValue));
             canvas.drawPath(mDstFlash3, mPaint);
         }
 
         mPaint.setStrokeWidth(5);
-        matrix.reset();
-        matrix.postScale(0.2f, 0.2f);
-        matrix.postTranslate(transFactor, getHeight() - bitmap.getHeight() * 0.2f + 2f);
-        canvas.drawBitmap(bitmap, matrix, mPaint);
+        mMatrix.reset();
+        mMatrix.postScale(0.2f, 0.2f);
+        mMatrix.postTranslate(mTransFactor, getHeight() - mBitmap.getHeight() * 0.2f + 2f);
+        canvas.drawBitmap(mBitmap, mMatrix, mPaint);
         Rain rain;
         for (int i = 0; i < mRains.size(); i++) {
             rain = mRains.get(i);
             mPaint.setAlpha(rain.alpha);
-            canvas.drawLine(rain.x, rain.y, (float) (rain.x + rain.length * Math.sin(Math.PI * windLevel / 180)), (float) (rain.y + rain.length * Math.cos(Math.PI * windLevel / 180)), mPaint);
+            canvas.drawLine(rain.x, rain.y,
+                    (float) (rain.x + rain.length * Math.sin(Math.PI * mWindLevel / 180f)),
+                    (float) (rain.y + rain.length * Math.cos(Math.PI * mWindLevel / 180)), mPaint);
         }
         for (int i = 0; i < mRains.size(); i++) {
             rain = mRains.get(i);
-            rain.x += (rain.length + rain.speed) * Math.sin(Math.PI * windLevel / 180);
-            rain.y += (rain.length + rain.speed) * Math.cos(Math.PI * windLevel / 180);
+            rain.x += (rain.length + rain.speed) * Math.sin(Math.PI * mWindLevel / 180);
+            rain.y += (rain.length + rain.speed) * Math.cos(Math.PI * mWindLevel / 180);
             if (rain.x > getWidth() || rain.y > getHeight()) {
                 rain.x = getRandom(getWidth() / 3, getWidth() - getWidth() / 5);
                 rain.y = getRandom(getHeight() / 2, getHeight() - getHeight() / 5);
             }
         }
-        if (isSnowing) {
+        if (mIsSnowing) {
             mPaint.setStyle(Paint.Style.FILL);
             SnowType.Snow snow;
             for (int i = 0; i < mSnows.size(); i++) {
                 snow = mSnows.get(i);
-                mPaint.setAlpha((int) (255 * (((float) snow.y - getHeight() / 2) / (float) getHeight())));
+                mPaint.setAlpha((int) (255 * (((float) snow.y - getHeight() / 2)
+                        / (float) getHeight())));
                 canvas.drawCircle(snow.x, snow.y, snow.size, mPaint);
             }
             for (int i = 0; i < mSnows.size(); i++) {
@@ -172,8 +175,8 @@ public class RainType extends BaseWeatherType {
             flash1.lineTo(xArray[i] + x1, yArray[i] + y1);
         }
 
-        flashPathMeasure1.setPath(flash1, false);
-        mFlashLength1 = flashPathMeasure1.getLength();
+        mFlashPathMeasure1.setPath(flash1, false);
+        mFlashLength1 = mFlashPathMeasure1.getLength();
 
         int[] yArray2Temp = randomArray(yArray[20], yArray[40], 20);
         Arrays.sort(yArray2Temp);
@@ -217,11 +220,11 @@ public class RainType extends BaseWeatherType {
             flash3.lineTo(xArray3[n] + x1, yArray3[n] + y1);
         }
 
-        flashPathMeasure2.setPath(flash2, false);
-        mFlashLength2 = flashPathMeasure2.getLength();
+        mFlashPathMeasure2.setPath(flash2, false);
+        mFlashLength2 = mFlashPathMeasure2.getLength();
 
-        flashPathMeasure3.setPath(flash3, false);
-        mFlashLength3 = flashPathMeasure3.getLength();
+        mFlashPathMeasure3.setPath(flash3, false);
+        mFlashLength3 = mFlashPathMeasure3.getLength();
     }
 
     private int[] randomArray(int min, int max, int n) {
@@ -250,7 +253,7 @@ public class RainType extends BaseWeatherType {
     @Override
     public void generateElements() {
         mRains.clear();
-        for (int i = 0; i < rainLevel; i++) {
+        for (int i = 0; i < mRainLevel; i++) {
             Rain rain = new Rain(
                     getRandom(getWidth() / 4, getWidth() - getWidth() / 5),
                     getRandom(getHeight() / 2, getHeight() - getHeight() / 5),
@@ -263,7 +266,7 @@ public class RainType extends BaseWeatherType {
         createFlash(getWidth() / 3, getHeight() / 2);
 
         mSnows.clear();
-        for (int i = 0; i < rainLevel; i++) {
+        for (int i = 0; i < mRainLevel; i++) {
             SnowType.Snow snow = new SnowType.Snow(
                     getRandom(getWidth() / 4, getWidth() - getWidth() / 5),
                     getRandom(getHeight() / 2, getHeight() - getHeight() / 5),
@@ -275,84 +278,68 @@ public class RainType extends BaseWeatherType {
     }
 
     public boolean isFlashing() {
-        return isFlashing;
+        return mIsFlashing;
     }
 
     public void setFlashing(boolean flashing) {
-        isFlashing = flashing;
+        mIsFlashing = flashing;
         setWeatherColor(0xFF7187DB);
     }
 
     public boolean isSnowing() {
-        return isSnowing;
+        return mIsSnowing;
     }
 
     public void setSnowing(boolean snowing) {
-        isSnowing = snowing;
+        mIsSnowing = snowing;
         setWeatherColor(0xFF5697D8);
     }
 
     @Override
     public void startAnimation(int fromColor) {
-        ValueAnimator backgroundColorAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), fromColor, mWeatherColor);
+        ValueAnimator backgroundColorAnimator = ValueAnimator.ofObject(new ArgbEvaluator(),
+                fromColor, mWeatherColor);
         backgroundColorAnimator.setInterpolator(new LinearInterpolator());
         backgroundColorAnimator.setDuration(1000);
         backgroundColorAnimator.setRepeatCount(0);
-        backgroundColorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                mDynamicColor = (int) animation.getAnimatedValue();
-            }
-        });
+        backgroundColorAnimator.addUpdateListener(animation ->
+                mDynamicColor = (int) animation.getAnimatedValue());
 
-        ValueAnimator animator = ValueAnimator.ofFloat(-bitmap.getWidth() * 0.2f, getWidth() - bitmap.getWidth() * 0.2f);
+        ValueAnimator animator = ValueAnimator.ofFloat(-mBitmap.getWidth() * 0.2f,
+                getWidth() - mBitmap.getWidth() * 0.2f);
         animator.setDuration(1000);
         animator.setRepeatCount(0);
         animator.setInterpolator(new OvershootInterpolator());
-        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                transFactor = (float) animation.getAnimatedValue();
-            }
-        });
+        animator.addUpdateListener(animation ->
+                mTransFactor = (float) animation.getAnimatedValue());
 
         mStartAnimatorSet = new AnimatorSet();
         mStartAnimatorSet.play(backgroundColorAnimator).with(animator);
         mStartAnimatorSet.start();
 
-        flashRunnable = new Runnable() {
-            @Override
-            public void run() {
-                ValueAnimator animator2 = ValueAnimator.ofFloat(0, 1);
-                animator2.setDuration(500);
-                animator2.setRepeatCount(0);
-                animator2.setInterpolator(new DecelerateInterpolator());
-                animator2.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                    @Override
-                    public void onAnimationUpdate(ValueAnimator animation) {
-                        mAnimatorValue = (float) animation.getAnimatedValue();
-                    }
-                });
-                animator2.start();
-                mHandler.postDelayed(flashRunnable, 5000);
-            }
+        mFlashRunnable = () -> {
+            ValueAnimator animator2 = ValueAnimator.ofFloat(0, 1);
+            animator2.setDuration(500);
+            animator2.setRepeatCount(0);
+            animator2.setInterpolator(new DecelerateInterpolator());
+            animator2.addUpdateListener(animation ->
+                    mAnimatorValue = (float) animation.getAnimatedValue());
+            animator2.start();
+            mHandler.postDelayed(mFlashRunnable, 5000L);
         };
-        mHandler.post(flashRunnable);
+        mHandler.post(mFlashRunnable);
     }
 
     @Override
     public void endAnimation(AnimatorListenerAdapter listener) {
-        mHandler.removeCallbacks(flashRunnable);
-        ValueAnimator animator = ValueAnimator.ofFloat(getWidth() - bitmap.getWidth() * 0.2f, getWidth());
+        mHandler.removeCallbacks(mFlashRunnable);
+        ValueAnimator animator = ValueAnimator.ofFloat(getWidth() - mBitmap.getWidth() * 0.2f,
+                getWidth());
         animator.setDuration(END_ANIM_DURATION);
         animator.setRepeatCount(0);
         animator.setInterpolator(new AccelerateInterpolator());
-        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                transFactor = (float) animation.getAnimatedValue();
-            }
-        });
+        animator.addUpdateListener(animation ->
+                mTransFactor = (float) animation.getAnimatedValue());
         mEndAnimatorSet = new AnimatorSet();
         mEndAnimatorSet.play(animator);
         if (listener != null) {
@@ -363,12 +350,12 @@ public class RainType extends BaseWeatherType {
 
     @IntDef({RAIN_LEVEL_1, RAIN_LEVEL_2, RAIN_LEVEL_3})
     @Retention(RetentionPolicy.SOURCE)
-    public @interface RainLevel {
+    @interface RainLevel {
     }
 
     @IntDef({WIND_LEVEL_1, WIND_LEVEL_2, WIND_LEVEL_3})
     @Retention(RetentionPolicy.SOURCE)
-    public @interface WindLevel {
+    @interface WindLevel {
     }
 
     private class Rain {

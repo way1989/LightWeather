@@ -24,14 +24,20 @@ import com.light.weather.util.RxSchedulers;
 import com.light.weather.util.UiUtil;
 import com.light.weather.viewmodel.WeatherViewModel;
 import com.light.weather.widget.SimplePagerIndicator;
-import com.light.weather.widget.dynamic.BaseWeatherType;
-import com.light.weather.widget.dynamic.DynamicWeatherView;
+import com.light.weather.widget.dynamic.WeatherType;
+import com.light.weather.widget.dynamic.WeatherView;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
+import io.reactivex.FlowableEmitter;
+import io.reactivex.FlowableOnSubscribe;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
 
 
 public class MainActivity extends BaseDagger2Activity<WeatherViewModel>
@@ -40,7 +46,7 @@ public class MainActivity extends BaseDagger2Activity<WeatherViewModel>
     private static final String TAG = "MainActivity";
     private static final int REQUEST_CODE_CITY = 0;
     @BindView(R.id.dynamic_weather_view)
-    DynamicWeatherView mDynamicWeatherView;
+    WeatherView mDynamicWeatherView;
     @BindView(R.id.main_view_pager)
     ViewPager mMainViewPager;
     @BindView(R.id.toolbar)
@@ -52,6 +58,8 @@ public class MainActivity extends BaseDagger2Activity<WeatherViewModel>
     private MainFragmentPagerAdapter<City> mAdapter;
     private List<City> mCities;
     private int mSelectItem = -1;
+    private Disposable mWeatherTypeDisposable;
+    private FlowableEmitter<WeatherType> mWeatherTypeEmitter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +73,12 @@ public class MainActivity extends BaseDagger2Activity<WeatherViewModel>
         setSupportActionBar(mToolbar);
         setupToolBar();
         setupViewPager();
+
+        mWeatherTypeDisposable = Flowable.create((FlowableOnSubscribe<WeatherType>)
+                emitter -> mWeatherTypeEmitter = emitter, BackpressureStrategy.BUFFER)
+                .debounce(450L, TimeUnit.MILLISECONDS)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(type -> mDynamicWeatherView.setType(type));
 
         getCities();//加载城市列表
     }
@@ -125,6 +139,9 @@ public class MainActivity extends BaseDagger2Activity<WeatherViewModel>
     protected void onDestroy() {
         super.onDestroy();
         Log.i(TAG, "onDestroy: ");
+        if (mWeatherTypeDisposable != null && !mWeatherTypeDisposable.isDisposed()) {
+            mWeatherTypeDisposable.dispose();
+        }
         mDynamicWeatherView.onDestroy();
     }
 
@@ -158,8 +175,9 @@ public class MainActivity extends BaseDagger2Activity<WeatherViewModel>
     }
 
     @Override
-    public void onDrawerTypeChange(BaseWeatherType type) {
-        mDynamicWeatherView.setType(type);
+    public void onDrawerTypeChange(WeatherType type) {
+        //mDynamicWeatherView.setType(type);
+        mWeatherTypeEmitter.onNext(type);
     }
 
     @Override

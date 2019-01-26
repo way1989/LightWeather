@@ -22,30 +22,25 @@ import android.view.animation.OvershootInterpolator;
  * Created by liyu on 2017/8/19.
  */
 
-public class OvercastType extends BaseWeatherType {
+public class OvercastType extends WeatherType {
 
-    private static final int hillColor = 0xFF59789D; //山坡的颜色
-    private PathMeasure measure;
+    private static final int HILL_COLOR = 0xFF59789D; //山坡的颜色
+    private PathMeasure mPathMeasure;
     private Paint mPaint;
     private Path mPathFront;                         // 近处的山坡
     private Path mPathRear;                          // 远处的山坡
-    private Path fanPath = new Path();               // 旋转的风扇的扇叶
-    private Path fanPillarPath = new Path();         // 旋转的风扇的柱子
-    private float fanPillarHeight;
-    private float curRotate;                         // 旋转的风扇的角度
-    private float[] pos;                             // 当前点的实际位置
-    private float[] tan;                             // 当前点的tangent值,用于计算图片所需旋转的角度
-    private String windSpeed;
-
-    private Shader cloudShader;
-
-    private Path cloudPath;
-
-    private float cloudTransFactor;
-
-    private float hillTransFactor;
-
-    private float cloudOffset = 0;
+    private Path mFanPath = new Path();               // 旋转的风扇的扇叶
+    private Path mFanPillarPath = new Path();         // 旋转的风扇的柱子
+    private float mFanPillarHeight;
+    private float mCurRotate;                         // 旋转的风扇的角度
+    private float[] mPos;                             // 当前点的实际位置
+    private float[] mTan;                             // 当前点的tangent值,用于计算图片所需旋转的角度
+    private String mWindSpeed;
+    private Shader mCloudShader;
+    private Path mCloudPath;
+    private float mCloudTransFactor;
+    private float mHillTransFactor;
+    private float mCloudOffset;
 
     public OvercastType(Resources resources, ShortWeatherInfo info) {
         super(resources);
@@ -53,19 +48,19 @@ public class OvercastType extends BaseWeatherType {
         mPathFront = new Path();
         mPathRear = new Path();
         mPaint = new Paint();
-        pos = new float[2];
-        tan = new float[2];
-        measure = new PathMeasure();
-        windSpeed = info.getWindSpeed();
-        cloudPath = new Path();
-        cloudOffset = dp2px(32);
+        mPos = new float[2];
+        mTan = new float[2];
+        mPathMeasure = new PathMeasure();
+        mWindSpeed = info.getWindSpeed();
+        mCloudPath = new Path();
+        mCloudOffset = dp2px(32);
     }
 
     @Override
     public void onDrawElements(Canvas canvas) {
 
         mPaint.reset();
-        mPaint.setColor(hillColor);
+        mPaint.setColor(HILL_COLOR);
         mPaint.setAntiAlias(true);
         mPaint.setStyle(Paint.Style.FILL_AND_STROKE);
 
@@ -75,8 +70,9 @@ public class OvercastType extends BaseWeatherType {
         mPaint.setAlpha(100);
 
         mPathRear.reset();
-        mPathRear.moveTo(getWidth(), getHeight() - getHeight() * 1 / 7 * hillTransFactor);
-        mPathRear.rQuadTo(-getWidth() / 2, -20 * hillTransFactor, -getWidth(), getHeight() / 10 * hillTransFactor);
+        mPathRear.moveTo(getWidth(), getHeight() - getHeight() / 7f * mHillTransFactor);
+        mPathRear.rQuadTo(-getWidth() / 2f, -20 * mHillTransFactor, -getWidth(),
+                getHeight() / 10f * mHillTransFactor);
         mPathRear.lineTo(0, getHeight());
         mPathRear.lineTo(getWidth(), getHeight());
         mPathRear.close();
@@ -85,122 +81,122 @@ public class OvercastType extends BaseWeatherType {
         mPaint.setAlpha(255);
 
         mPathFront.reset();
-        mPathFront.moveTo(0, getHeight() - getHeight() * 1 / 7 * hillTransFactor);
-        mPathFront.rQuadTo(getWidth() / 2, -20 * hillTransFactor, getWidth(), getHeight() / 10 * hillTransFactor);
+        mPathFront.moveTo(0, getHeight() - getHeight() / 7f * mHillTransFactor);
+        mPathFront.rQuadTo(getWidth() / 2f, -20 * mHillTransFactor, getWidth(),
+                getHeight() / 10f * mHillTransFactor);
         mPathFront.lineTo(getWidth(), getHeight());
         mPathFront.lineTo(0, getHeight());
         mPathFront.close();
 
-        drawFan(canvas, mPathFront, 0.618f * hillTransFactor, 1f);
+        drawFan(canvas, mPathFront, 0.618f * mHillTransFactor, 1f);
 
-        drawFan(canvas, mPathRear, 0.15f * hillTransFactor, 0.4f);
+        drawFan(canvas, mPathRear, 0.15f * mHillTransFactor, 0.4f);
 
         mPaint.reset();
-        mPaint.setColor(hillColor);
+        mPaint.setColor(HILL_COLOR);
         mPaint.setAntiAlias(true);
         mPaint.setStyle(Paint.Style.FILL_AND_STROKE);
         canvas.drawPath(mPathFront, mPaint);
 
-        mPaint.setShader(cloudShader);
-        cloudPath.reset();
-        cloudPath.addCircle(getWidth() * cloudTransFactor, getHeight() * 0.618f - cloudOffset, getHeight() / 22, Path.Direction.CW);
-        cloudPath.addCircle(getWidth() * cloudTransFactor, getHeight() * 0.618f, getHeight() / 22, Path.Direction.CW);
-        cloudPath.addCircle(getWidth() * cloudTransFactor - getHeight() / 19, getHeight() * 0.618f - cloudOffset * 2 / 3, getHeight() / 26, Path.Direction.CW);
-        cloudPath.addCircle(getWidth() * cloudTransFactor + getHeight() / 20, getHeight() * 0.618f - cloudOffset * 2 / 3, getHeight() / 30, Path.Direction.CW);
-        canvas.drawPath(cloudPath, mPaint);
+        mPaint.setShader(mCloudShader);
+        mCloudPath.reset();
+        mCloudPath.addCircle(getWidth() * mCloudTransFactor,
+                getHeight() * 0.618f - mCloudOffset, getHeight() / 22f,
+                Path.Direction.CW);
+        mCloudPath.addCircle(getWidth() * mCloudTransFactor, getHeight() * 0.618f,
+                getHeight() / 22f, Path.Direction.CW);
+        mCloudPath.addCircle(getWidth() * mCloudTransFactor - getHeight() / 19f,
+                getHeight() * 0.618f - mCloudOffset * 2 / 3, getHeight() / 26f,
+                Path.Direction.CW);
+        mCloudPath.addCircle(getWidth() * mCloudTransFactor + getHeight() / 20f,
+                getHeight() * 0.618f - mCloudOffset * 2 / 3, getHeight() / 30f,
+                Path.Direction.CW);
+        canvas.drawPath(mCloudPath, mPaint);
 
     }
 
     private void drawFan(Canvas canvas, Path path, float location, float scale) {
         int saveCount = canvas.save();
-        measure.setPath(path, false);
-        measure.getPosTan(getWidth() * location, pos, tan);
-        canvas.translate(pos[0], pos[1] - fanPillarHeight * scale);
+        mPathMeasure.setPath(path, false);
+        mPathMeasure.getPosTan(getWidth() * location, mPos, mTan);
+        canvas.translate(mPos[0], mPos[1] - mFanPillarHeight * scale);
         canvas.scale(scale, scale);
         mPaint.setStyle(Paint.Style.FILL);
         mPaint.setColor(Color.WHITE);
-        canvas.drawPath(fanPillarPath, mPaint);
-        canvas.rotate(curRotate * 360f);
+        canvas.drawPath(mFanPillarPath, mPaint);
+        canvas.rotate(mCurRotate * 360f);
         float speed = 0f;
         try {
-            speed = Float.valueOf(windSpeed);
+            speed = Float.valueOf(mWindSpeed);
         } catch (Exception e) {
             e.printStackTrace();
         }
         speed = Math.max(speed, 0.75f);
-        curRotate += 0.0002f * speed;
-        if (curRotate > 1f) {
-            curRotate = 0f;
+        mCurRotate += 0.0002f * speed;
+        if (mCurRotate > 1f) {
+            mCurRotate = 0f;
         }
         mPaint.setStyle(Paint.Style.FILL);
-        canvas.drawPath(fanPath, mPaint);
+        canvas.drawPath(mFanPath, mPaint);
         canvas.rotate(120f);
-        canvas.drawPath(fanPath, mPaint);
+        canvas.drawPath(mFanPath, mPaint);
         canvas.rotate(120f);
-        canvas.drawPath(fanPath, mPaint);
+        canvas.drawPath(mFanPath, mPaint);
         canvas.restoreToCount(saveCount);
     }
 
     @Override
     public void generateElements() {
-        cloudShader = new LinearGradient(getWidth() / 2, 0, getWidth() / 2, getHeight() * 0.618f, 0xFFFFFFFF,
+        mCloudShader = new LinearGradient(getWidth() / 2f, 0,
+                getWidth() / 2f, getHeight() * 0.618f, 0xFFFFFFFF,
                 0x00FFFFFF, Shader.TileMode.CLAMP);
         final float textSize = getHeight() / 32f;
-        fanPath.reset();
+        mFanPath.reset();
         final float fanSize = textSize * 0.2f;// 风扇底部半圆的半径
         final float fanHeight = textSize * 2f;
         final float fanCenterOffsetY = fanSize * 1.6f;
-        fanPath.addArc(new RectF(-fanSize, -fanSize - fanCenterOffsetY, fanSize, fanSize - fanCenterOffsetY), 0,
-                180);
-        fanPath.quadTo(-fanSize * 1f, -fanHeight * 0.5f - fanCenterOffsetY, 0, -fanHeight - fanCenterOffsetY);
-        fanPath.quadTo(fanSize * 1f, -fanHeight * 0.5f - fanCenterOffsetY, fanSize, -fanCenterOffsetY);
-        fanPath.close();
+        mFanPath.addArc(new RectF(-fanSize, -fanSize - fanCenterOffsetY, fanSize,
+                        fanSize - fanCenterOffsetY), 0, 180);
+        mFanPath.quadTo(-fanSize * 1f, -fanHeight * 0.5f - fanCenterOffsetY,
+                0, -fanHeight - fanCenterOffsetY);
+        mFanPath.quadTo(fanSize * 1f, -fanHeight * 0.5f - fanCenterOffsetY,
+                fanSize, -fanCenterOffsetY);
+        mFanPath.close();
 
-        fanPillarPath.reset();
+        mFanPillarPath.reset();
         final float fanPillarSize = textSize * 0.20f;// 柱子的宽度
-        fanPillarPath.moveTo(0, 0);
-        fanPillarHeight = textSize * 4f;// 柱子的高度
-        fanPillarPath.lineTo(2, 0);
-        fanPillarPath.lineTo(fanPillarSize, fanPillarHeight);
-        fanPillarPath.lineTo(-fanPillarSize, fanPillarHeight);
-        fanPillarPath.lineTo(-2, 0);
-        fanPillarPath.close();
+        mFanPillarPath.moveTo(0, 0);
+        mFanPillarHeight = textSize * 4f;// 柱子的高度
+        mFanPillarPath.lineTo(2, 0);
+        mFanPillarPath.lineTo(fanPillarSize, mFanPillarHeight);
+        mFanPillarPath.lineTo(-fanPillarSize, mFanPillarHeight);
+        mFanPillarPath.lineTo(-2, 0);
+        mFanPillarPath.close();
     }
 
     @Override
     public void startAnimation(int fromColor) {
-        ValueAnimator backgroundColorAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), fromColor, mWeatherColor);
+        ValueAnimator backgroundColorAnimator = ValueAnimator.ofObject(new ArgbEvaluator(),
+                fromColor, mWeatherColor);
         backgroundColorAnimator.setInterpolator(new LinearInterpolator());
         backgroundColorAnimator.setDuration(1000);
         backgroundColorAnimator.setRepeatCount(0);
-        backgroundColorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                mDynamicColor = (int) animation.getAnimatedValue();
-            }
-        });
+        backgroundColorAnimator.addUpdateListener(animation ->
+                mDynamicColor = (int) animation.getAnimatedValue());
 
         ValueAnimator animator = ValueAnimator.ofFloat(-0.2f, 1.2f);
         animator.setDuration(30000);
         animator.setRepeatCount(-1);
         animator.setInterpolator(new LinearInterpolator());
-        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                cloudTransFactor = (float) animation.getAnimatedValue();
-            }
-        });
+        animator.addUpdateListener(animation ->
+                mCloudTransFactor = (float) animation.getAnimatedValue());
 
         ValueAnimator animator2 = ValueAnimator.ofFloat(0, 1);
         animator2.setDuration(1000);
         animator2.setRepeatCount(0);
         animator2.setInterpolator(new OvershootInterpolator());
-        animator2.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                hillTransFactor = (float) animation.getAnimatedValue();
-            }
-        });
+        animator2.addUpdateListener(animation ->
+                mHillTransFactor = (float) animation.getAnimatedValue());
 
         mStartAnimatorSet = new AnimatorSet();
         mStartAnimatorSet.play(backgroundColorAnimator).with(animator).with(animator2);
@@ -213,12 +209,8 @@ public class OvercastType extends BaseWeatherType {
         animator.setDuration(END_ANIM_DURATION);
         animator.setRepeatCount(0);
         animator.setInterpolator(new AccelerateInterpolator());
-        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                hillTransFactor = (float) animation.getAnimatedValue();
-            }
-        });
+        animator.addUpdateListener(animation ->
+                mHillTransFactor = (float) animation.getAnimatedValue());
 
         mEndAnimatorSet = new AnimatorSet();
         mEndAnimatorSet.play(animator);

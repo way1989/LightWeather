@@ -8,7 +8,7 @@ import android.text.TextUtils;
 import com.light.weather.R;
 import com.light.weather.bean.HeBasic;
 import com.light.weather.bean.HeWeather6;
-import com.light.weather.widget.dynamic.BaseWeatherType;
+import com.light.weather.widget.dynamic.WeatherType;
 import com.light.weather.widget.dynamic.DefaultType;
 import com.light.weather.widget.dynamic.FogType;
 import com.light.weather.widget.dynamic.HailType;
@@ -316,7 +316,7 @@ public class WeatherUtil {
         return date;
     }
 
-    private static BaseWeatherType getHeWeatherType(Resources context, ShortWeatherInfo info) {
+    private static WeatherType getHeWeatherType(Resources context, ShortWeatherInfo info) {
         if (info != null && TextUtils.isDigitsOnly(info.getCode())) {
             int code = Integer.parseInt(info.getCode());
             if (code == 100) {//晴
@@ -379,7 +379,7 @@ public class WeatherUtil {
             return null;
     }
 
-    public static BaseWeatherType getType(Resources context, ShortWeatherInfo info) {
+    public static WeatherType getType(Resources context, ShortWeatherInfo info) {
         return getHeWeatherType(context, info);
     }
 }

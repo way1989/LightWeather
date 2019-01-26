@@ -81,6 +81,10 @@ public class WeatherViewModel extends AndroidViewModel {
                         return cities;
                     List<HeBasic> beanList = heSearch.getWeather().getBasic();
                     for (HeBasic bean : beanList) {
+                        //景点城市免费api没有权限
+                        if (bean.getCid().endsWith("A")) {
+                            continue;
+                        }
                         City city = new City(bean.getLocation(), bean.getCnty(),
                                 bean.getCid(), bean.getLat(), bean.getLon(),
                                 bean.getAdmin_area());

@@ -26,14 +26,14 @@ import com.light.weather.R;
  * Created by liyu on 2017/8/19.
  */
 
-public class HazeType extends BaseWeatherType {
+public class HazeType extends WeatherType {
 
-    private Camera camera;
+    private Camera mCamera;
     private Paint mPaint;
     private Path mPathFront;
     private Path mPathRear;
-    private float speed;
-    private float rotate;
+    private float mSpeed;
+    private float mRotate;
     private Bitmap mBitmap;             // 箭头图片
     private Matrix mMatrix;             // 矩阵,用于对图片进行一些操作
     private float φ;
@@ -45,7 +45,7 @@ public class HazeType extends BaseWeatherType {
         mPathRear = new Path();
         mPaint = new Paint();
         mMatrix = new Matrix();
-        camera = new Camera();
+        mCamera = new Camera();
         mBitmap = BitmapFactory.decodeResource(resources, R.drawable.ic_haze_ground);
     }
 
@@ -59,7 +59,8 @@ public class HazeType extends BaseWeatherType {
         clearCanvas(canvas);
         canvas.drawColor(mDynamicColor);
 
-        Shader shader = new LinearGradient(0, getHeight(), getWidth(), getHeight(), 0x33ffffff, 0xccffffff, Shader.TileMode.CLAMP);
+        Shader shader = new LinearGradient(0, getHeight(), getWidth(),
+                getHeight(), 0x33ffffff, 0xccffffff, Shader.TileMode.CLAMP);
         mPaint.setShader(shader);
 
         φ -= 0.05f;
@@ -80,8 +81,8 @@ public class HazeType extends BaseWeatherType {
              *  φ—初相，反映在坐标系上则为图像的左右移动，通过不断改变φ,达到波浪移动效果
              *  k—偏距，反映在坐标系上则为图像的上移或下移。
              */
-            y = (float) (speed * Math.cos(ω * x + φ) + getHeight() * 6 / 7);
-            y2 = (float) (speed * Math.sin(ω * x + φ) + getHeight() * 6 / 7 - 8);
+            y = (float) (mSpeed * Math.cos(ω * x + φ) + getHeight() * 6 / 7);
+            y2 = (float) (mSpeed * Math.sin(ω * x + φ) + getHeight() * 6 / 7 - 8);
             mPathFront.lineTo(x, y);
             mPathRear.lineTo(x, y2);
         }
@@ -91,17 +92,18 @@ public class HazeType extends BaseWeatherType {
 
         canvas.save();
 
-        camera.save(); // 保存 Camera 的状态
-        camera.rotateX(90 - 90 * rotate);
+        mCamera.save(); // 保存 Camera 的状态
+        mCamera.rotateX(90 - 90 * mRotate);
         canvas.translate(getWidth() - mBitmap.getWidth() * 0.3f * 4 / 3, getHeight()); // 旋转之后把投影移动回来
-        camera.applyToCanvas(canvas); // 把旋转投影到 Canvas
+        mCamera.applyToCanvas(canvas); // 把旋转投影到 Canvas
         canvas.translate(-(getWidth() - mBitmap.getWidth() * 0.3f * 4 / 3), -(getHeight())); // 旋转之前把绘制内容移动到轴心（原点）
-        camera.restore(); // 恢复 Camera 的状态
+        mCamera.restore(); // 恢复 Camera 的状态
 
         mPaint.setAlpha(255);
         mMatrix.reset();
         mMatrix.postScale(0.3f, 0.3f);
-        mMatrix.postTranslate(getWidth() - mBitmap.getWidth() * 0.3f * 4 / 3, getHeight() - mBitmap.getHeight() * 0.3f + 2f);
+        mMatrix.postTranslate(getWidth() - mBitmap.getWidth() * 0.3f * 4 / 3,
+                getHeight() - mBitmap.getHeight() * 0.3f + 2f);
         canvas.drawBitmap(mBitmap, mMatrix, mPaint);
         canvas.restore();
 
@@ -120,25 +122,19 @@ public class HazeType extends BaseWeatherType {
 
     @Override
     public void startAnimation(int fromColor) {
-        ValueAnimator backgroundColorAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), fromColor, mWeatherColor);
+        ValueAnimator backgroundColorAnimator = ValueAnimator
+                .ofObject(new ArgbEvaluator(), fromColor, mWeatherColor);
         backgroundColorAnimator.setInterpolator(new LinearInterpolator());
         backgroundColorAnimator.setDuration(1000);
         backgroundColorAnimator.setRepeatCount(0);
-        backgroundColorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                mDynamicColor = (int) animation.getAnimatedValue();
-            }
-        });
+        backgroundColorAnimator.addUpdateListener(animation ->
+                mDynamicColor = (int) animation.getAnimatedValue());
 
         ValueAnimator animator1 = ValueAnimator.ofFloat(0, 1);
         animator1.setInterpolator(new OvershootInterpolator());
-        animator1.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                speed = (float) animation.getAnimatedValue() * 32;
-                rotate = (float) animation.getAnimatedValue();
-            }
+        animator1.addUpdateListener(animation -> {
+            mSpeed = (float) animation.getAnimatedValue() * 32;
+            mRotate = (float) animation.getAnimatedValue();
         });
 
         mStartAnimatorSet = new AnimatorSet();
@@ -152,12 +148,9 @@ public class HazeType extends BaseWeatherType {
     public void endAnimation(AnimatorListenerAdapter listener) {
         ValueAnimator animator1 = ValueAnimator.ofFloat(1, 0);
         animator1.setInterpolator(new AccelerateInterpolator());
-        animator1.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                speed = (float) animation.getAnimatedValue() * 32;
-                rotate = (float) animation.getAnimatedValue();
-            }
+        animator1.addUpdateListener(animation -> {
+            mSpeed = (float) animation.getAnimatedValue() * 32;
+            mRotate = (float) animation.getAnimatedValue();
         });
 
         mEndAnimatorSet = new AnimatorSet();

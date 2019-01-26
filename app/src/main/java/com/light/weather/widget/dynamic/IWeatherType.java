@@ -6,7 +6,7 @@ import android.graphics.Canvas;
  * Created by liyu on 2017/8/16.
  */
 
-public interface WeatherHandler {
+public interface IWeatherType {
     void onDrawElements(Canvas canvas);
 
     void onSizeChanged(int width, int height);

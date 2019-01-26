@@ -13,7 +13,7 @@ import android.view.animation.LinearInterpolator;
  * Created by liyu on 2017/11/13.
  */
 
-public class DefaultType extends BaseWeatherType {
+public class DefaultType extends WeatherType {
 
     public DefaultType(Resources resources) {
         super(resources);
