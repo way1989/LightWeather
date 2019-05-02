@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:app="http://schemas.android.com/apk/res-auto"
-                xmlns:tools="http://schemas.android.com/tools"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="8dp">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="8dp">
 
     <com.light.weather.widget.CircleImageView
         android:id="@+id/civ_suggesstion"
@@ -14,7 +14,7 @@
         android:layout_centerHorizontal="true"
         android:cropToPadding="true"
         app:civ_fill_color="@color/colorAccent"
-        app:civ_padding="8dp"/>
+        app:civ_padding="8dp" />
 
     <TextView
         android:id="@+id/tvMsg"
@@ -25,7 +25,7 @@
         android:layout_marginTop="8dp"
         android:textColor="@color/colorTextDark"
         android:textSize="12sp"
-        tools:text="TextView"/>
+        tools:text="TextView" />
 
     <TextView
         android:id="@+id/tvName"
@@ -36,7 +36,7 @@
         android:layout_marginTop="4dp"
         android:textColor="@color/colorTextDark2nd"
         android:textSize="10sp"
-        tools:text="TextView"/>
+        tools:text="TextView" />
 
 
 </RelativeLayout>

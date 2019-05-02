@@ -3,51 +3,55 @@ package com.light.weather.ui.search;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.ActionBar;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SearchView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Toast;
+import android.widget.TextView;
 
+import androidx.annotation.StringRes;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.widget.SearchView;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.snackbar.Snackbar;
 import com.jakewharton.rxbinding2.support.v7.widget.RxSearchView;
 import com.light.weather.BuildConfig;
 import com.light.weather.R;
 import com.light.weather.adapter.SearchAdapter;
 import com.light.weather.bean.City;
-import com.light.weather.bean.SearchItem;
 import com.light.weather.ui.base.BaseDagger2NonFragmentInjectorActivity;
 import com.light.weather.util.AppConstant;
 import com.light.weather.util.RxSchedulers;
 import com.light.weather.viewmodel.WeatherViewModel;
+import com.light.weather.widget.SimpleListDividerDecorator;
+import com.zhy.view.flowlayout.FlowLayout;
+import com.zhy.view.flowlayout.TagAdapter;
+import com.zhy.view.flowlayout.TagFlowLayout;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
-import io.reactivex.ObservableSource;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.functions.Function;
 
 public class SearchCityActivity extends BaseDagger2NonFragmentInjectorActivity<WeatherViewModel>
-        implements MenuItem.OnActionExpandListener, View.OnTouchListener {
+        implements MenuItem.OnActionExpandListener {
     private static final String TAG = "SearchCityActivity";
     @BindView(R.id.recyclerview)
     RecyclerView mRecyclerView;
     private SearchAdapter mSearchAdapter;
     private SearchView mSearchView;
-    private List<SearchItem> mDefaultItems;
 
-    protected View mLoadingView;
+    private View mLoadingView;
+    private View mEmptyView;
+    private TextView mLocationView;
+    private TagFlowLayout mFlowLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,42 +63,63 @@ public class SearchCityActivity extends BaseDagger2NonFragmentInjectorActivity<W
 
         LayoutInflater inflater = getLayoutInflater();
         mLoadingView = inflater.inflate(R.layout._loading_layout_loading, null);
+        mEmptyView = inflater.inflate(R.layout.search_layout_empty, null);
+        mLocationView = mEmptyView.findViewById(R.id.search_location_item);
+        mFlowLayout = mEmptyView.findViewById(R.id.hot_city_flow_layout);
 
-        mRecyclerView.setLayoutManager(new GridLayoutManager(this, 3));
-        mRecyclerView.setOnTouchListener(this);
-        mSearchAdapter = new SearchAdapter(R.layout.item_search_city, R.layout.item_search_head, null);
-        //mSearchAdapter.openLoadAnimation(BaseQuickAdapter.ALPHAIN);
+        mDisposable.add(mViewModel.getLocationCity()
+                .compose(RxSchedulers.all_io_single())
+                .subscribe(this::setLocationCity, this::snack));
+        mLocationView.setOnClickListener(v -> onItemClick((City) v.getTag()));
+
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        mRecyclerView.setOnTouchListener((v, event) -> {
+            hideInputManager();
+            return false;
+        });
+        mSearchAdapter = new SearchAdapter(R.layout.item_search_city, null);
         mSearchAdapter.setOnItemClickListener((adapter, view, position) -> {
             final City city = (City) view.getTag();
             SearchCityActivity.this.onItemClick(city);
         });
         mRecyclerView.setAdapter(mSearchAdapter);
-        //mRecyclerView.addItemDecoration(new GridDividerItemDecoration(1, ContextCompat.getColor(this, R.color.divider_color)));
+        mRecyclerView.addItemDecoration(new SimpleListDividerDecorator(ContextCompat
+                .getDrawable(this, R.drawable.list_divider_h), false));
 
         loadDefaultCities();
+    }
+
+    private void setLocationCity(City city) {
+        mSearchAdapter.setEmptyView(mEmptyView);
+        mLocationView.setTag(city);
+        mLocationView.setText(city.getCity());
     }
 
     private void loadDefaultCities() {
         mSearchAdapter.setNewData(null);
         mSearchAdapter.setEmptyView(mLoadingView);
         mDisposable.add(mViewModel.getDefaultCities()
-                .compose(RxSchedulers.io_main())
-                .subscribe(searchItems -> {
-                    mDefaultItems = searchItems;
-                    mSearchAdapter.setNewData(mDefaultItems);
-                }, throwable -> {
-                    Log.e(TAG, "loadDefaultCities: ", throwable);
-                    Toast.makeText(getApplicationContext(), throwable.toString(), Toast.LENGTH_SHORT).show();
-                }));
+                .compose(RxSchedulers.io_main_single())
+                .subscribe(this::showDefaultData, this::snack));
     }
 
-    private List<SearchItem> getSearchItems(List<City> cities) {
-        List<SearchItem> searchItems = new ArrayList<>();
-        SearchItem searchItem = new SearchItem(true, getString(R.string.search_city_title));
-        searchItems.add(searchItem);
-        for (City city : cities)
-            searchItems.add(new SearchItem(city));
-        return searchItems;
+
+    public void showDefaultData(final List<City> cities) {
+        mFlowLayout.setAdapter(new TagAdapter<City>(cities) {
+            @Override
+            public View getView(FlowLayout parent, int position, City city) {
+                TextView tv = (TextView) LayoutInflater.from(SearchCityActivity.this)
+                        .inflate(R.layout.flow_layout_tv, parent, false);
+                tv.setTag(city);
+                tv.setText(city.getCity());
+                return tv;
+            }
+        });
+        mFlowLayout.setOnTagClickListener((view, position, parent) -> {
+            City city = cities.get(position);
+            onItemClick(city);
+            return false;
+        });
     }
 
     @Override
@@ -108,33 +133,26 @@ public class SearchCityActivity extends BaseDagger2NonFragmentInjectorActivity<W
         MenuItem searchMenuItem = menu.findItem(R.id.menu_search);
         mSearchView = (SearchView) searchMenuItem.getActionView();
         mSearchView.setQueryHint(getString(R.string.search_city));
-        //mSearchView.setIconifiedByDefault(false);
-        //mSearchView.setIconified(false);
         searchMenuItem.expandActionView();
-
         searchMenuItem.setOnActionExpandListener(this);
 
         mDisposable.add(RxSearchView.queryTextChanges(mSearchView)
                 .debounce(500, TimeUnit.MILLISECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(charSequence -> search(charSequence.toString())));
+                .subscribe(this::search));
         return super.onCreateOptionsMenu(menu);
     }
 
 
-    private void search(String query) {
-        if (!TextUtils.isEmpty(query) || !query.trim().equals("")) {
+    private void search(CharSequence query) {
+        if (TextUtils.isEmpty(query)) {
+            onSearchResult(null);
+        } else {
             mSearchAdapter.setNewData(null);
             mSearchAdapter.setEmptyView(mLoadingView);
             mDisposable.add(mViewModel.search(query)
                     .compose(RxSchedulers.io_main())
-                    .subscribe(cities -> onSearchResult(cities),
-                            throwable -> {
-                                Log.e(TAG, "accept: search city ", throwable);
-                                onSearchError(throwable);
-                            }));
-        } else {
-            onSearchResult(null);
+                    .subscribe(this::onSearchResult, this::onSearchError));
         }
     }
 
@@ -151,23 +169,38 @@ public class SearchCityActivity extends BaseDagger2NonFragmentInjectorActivity<W
     public void onSearchResult(List<City> cities) {
         Log.d(TAG, "onSearchResult... cities = " + cities);
         if (cities == null || cities.isEmpty()) {
-            mSearchAdapter.setNewData(mDefaultItems);
+            mSearchAdapter.setNewData(null);
+            mSearchAdapter.setEmptyView(mEmptyView);
         } else {
-            mSearchAdapter.setNewData(getSearchItems(cities));
+            mSearchAdapter.setNewData(cities);
         }
     }
 
     public void onSearchError(Throwable e) {
         Log.d(TAG, "onSearchError... e = " + e.getMessage());
-        mSearchAdapter.setNewData(mDefaultItems);
-        if (BuildConfig.LOG_DEBUG)
-            Snackbar.make(mRecyclerView, e.getMessage(), Snackbar.LENGTH_LONG).show();
+        mSearchAdapter.setNewData(null);
+        mSearchAdapter.setEmptyView(mEmptyView);
+        if (BuildConfig.LOG_DEBUG) {
+            snack(e.toString());
+        }
+    }
+
+    private void snack(Throwable throwable) {
+        Snackbar.make(mRecyclerView, throwable.toString(), Snackbar.LENGTH_SHORT).show();
+    }
+
+    private void snack(String msg) {
+        Snackbar.make(mRecyclerView, msg, Snackbar.LENGTH_SHORT).show();
+    }
+
+    private void snack(@StringRes int msg) {
+        Snackbar.make(mRecyclerView, msg, Snackbar.LENGTH_SHORT).show();
     }
 
     public void onSaveCitySucceed(City city) {
         Log.d(TAG, "onSaveCitySucceed city = " + city);
         if (city == null) {
-            Snackbar.make(mRecyclerView, R.string.city_exist, Snackbar.LENGTH_LONG).show();
+            snack(R.string.city_exist);
             return;
         }
         Intent intent = new Intent();
@@ -180,26 +213,20 @@ public class SearchCityActivity extends BaseDagger2NonFragmentInjectorActivity<W
         Log.d(TAG, "onItemClick city = " + city);
         hideInputManager();
         if (city == null) {
-            Toast.makeText(this, "city is null...", Toast.LENGTH_SHORT).show();
+            snack("city is null...");
             return;
         }
         if (city.isLocation()) {
             mSearchAdapter.setNewData(null);
             mSearchAdapter.setEmptyView(mLoadingView);
             mDisposable.add(mViewModel.getLocation()
-                    .concatMap((Function<City, ObservableSource<List<SearchItem>>>) city1 -> mViewModel.getDefaultCities())
                     .compose(RxSchedulers.io_main())
-                    .subscribe(searchItems -> {
-                        mDefaultItems = searchItems;
-                        mSearchAdapter.setNewData(mDefaultItems);
-                    }, throwable -> Toast.makeText(getApplicationContext(), throwable.toString(), Toast.LENGTH_SHORT).show()));
+                    .subscribe(this::setLocationCity, this::snack));
         } else {
             mDisposable.add(mViewModel.addCity(city)
                     .compose(RxSchedulers.io_main())
-                    .subscribe(result -> onSaveCitySucceed(result), throwable -> {
-                        Log.e(TAG, "accept: addCity city = " + city, throwable);
-                        Toast.makeText(getApplicationContext(), R.string.city_exist, Toast.LENGTH_SHORT).show();
-                    }));
+                    .subscribe(this::onSaveCitySucceed,
+                            throwable -> snack(R.string.city_exist)));
         }
     }
 
@@ -210,13 +237,11 @@ public class SearchCityActivity extends BaseDagger2NonFragmentInjectorActivity<W
 
     @Override
     public boolean onMenuItemActionCollapse(MenuItem item) {
-        finish();
-        return true;
-    }
-
-    @Override
-    public boolean onTouch(View v, MotionEvent event) {
-        hideInputManager();
+        if (TextUtils.isEmpty(mSearchView.getQuery())) {
+            finish();
+        } else {
+            mSearchView.setQuery("", true);
+        }
         return false;
     }
 }

@@ -17,10 +17,11 @@ import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.graphics.RectF;
 import android.graphics.Shader;
-import android.support.v4.view.animation.PathInterpolatorCompat;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
+
+import androidx.core.view.animation.PathInterpolatorCompat;
 
 import com.light.weather.R;
 import com.light.weather.util.TimeUtils;

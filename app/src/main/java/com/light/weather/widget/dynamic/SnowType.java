@@ -11,10 +11,11 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.support.annotation.IntDef;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.OvershootInterpolator;
+
+import androidx.annotation.IntDef;
 
 import com.light.weather.R;
 

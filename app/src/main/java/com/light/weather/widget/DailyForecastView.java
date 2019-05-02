@@ -7,10 +7,11 @@ import android.graphics.Paint.Align;
 import android.graphics.Paint.FontMetrics;
 import android.graphics.Paint.Style;
 import android.graphics.Path;
-import android.support.v4.view.ViewCompat;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.view.View;
+
+import androidx.core.view.ViewCompat;
 
 import com.light.weather.bean.HeWeather6;
 import com.light.weather.util.WeatherUtil;

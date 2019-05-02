@@ -2,8 +2,9 @@ package com.light.weather.di.module;
 
 import android.app.Application;
 import android.os.Environment;
-import android.support.annotation.NonNull;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import com.facebook.stetho.okhttp3.StethoInterceptor;
 import com.google.gson.Gson;

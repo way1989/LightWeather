@@ -15,11 +15,12 @@ import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.annotation.IntDef;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.OvershootInterpolator;
+
+import androidx.annotation.IntDef;
 
 import com.light.weather.R;
 

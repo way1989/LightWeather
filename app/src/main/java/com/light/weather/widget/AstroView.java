@@ -9,10 +9,11 @@ import android.graphics.Paint.Style;
 import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.support.v4.view.ViewCompat;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.view.View;
+
+import androidx.core.view.ViewCompat;
 
 import com.light.weather.bean.HeBasic;
 import com.light.weather.bean.HeWeather6;

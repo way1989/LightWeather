@@ -4,11 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -19,6 +14,12 @@ import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.light.weather.BuildConfig;
@@ -38,9 +39,9 @@ import com.light.weather.widget.AqiView;
 import com.light.weather.widget.AstroView;
 import com.light.weather.widget.DailyForecastView;
 import com.light.weather.widget.HourlyForecastView;
-import com.light.weather.widget.dynamic.WeatherType;
 import com.light.weather.widget.dynamic.DefaultType;
 import com.light.weather.widget.dynamic.ShortWeatherInfo;
+import com.light.weather.widget.dynamic.WeatherType;
 import com.tbruyelle.rxpermissions2.Permission;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 

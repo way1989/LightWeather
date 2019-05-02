@@ -36,7 +36,7 @@ public interface ApiService {
      */
     @Headers({DOMAIN_NAME_HEADER + DOMAIN_NAME_SEARCH})
     @GET("find?")
-    Observable<BaseResponse<List<HeBasic>>> searchCity(@Query("key") String key, @Query("location") String location);
+    Observable<BaseResponse<List<HeBasic>>> searchCity(@Query("key") String key, @Query("location") CharSequence location);
 
     /**
      * @param location 需要查询的城市或地区，可输入以下值：

@@ -1,7 +1,7 @@
 package com.light.weather.di.module;
 
-import android.arch.lifecycle.ViewModel;
-import android.arch.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.light.weather.di.ViewModelKey;
 import com.light.weather.di.WeatherViewModelFactory;

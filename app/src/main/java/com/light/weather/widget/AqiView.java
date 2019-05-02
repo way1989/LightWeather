@@ -11,11 +11,12 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.SweepGradient;
-import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
+
+import androidx.annotation.Nullable;
 
 import com.light.weather.bean.HeWeather6;
 import com.light.weather.util.UiUtil;

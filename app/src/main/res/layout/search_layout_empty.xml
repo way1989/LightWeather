@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingStart="@dimen/dp_8"
+    android:paddingEnd="@dimen/dp_8">
+
+    <TextView
+        android:id="@+id/search_location_tv"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dp_40"
+        android:ellipsize="end"
+        android:padding="@dimen/dp_8"
+        android:text="定位城市"
+        android:textColor="@color/colorTextTitle"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/search_location_item"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/dp_4"
+        android:background="@color/colorBackground"
+        android:clickable="true"
+        android:drawableStart="@drawable/ic_location_on_black_18dp"
+        android:drawablePadding="@dimen/dp_4"
+        android:ellipsize="end"
+        android:focusable="true"
+        android:foreground="?selectableItemBackground"
+        android:gravity="center_vertical"
+        android:maxLines="1"
+        android:minHeight="36dp"
+        android:paddingStart="@dimen/dp_8"
+        android:paddingTop="@dimen/dp_4"
+        android:paddingEnd="@dimen/dp_8"
+        android:paddingBottom="@dimen/dp_4"
+        android:textColor="@color/colorTextTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/search_location_tv"
+        tools:text="常用网址" />
+
+    <TextView
+        android:id="@+id/hot_city_tv"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dp_40"
+        android:ellipsize="end"
+        android:padding="@dimen/dp_8"
+        android:layout_marginTop="@dimen/dp_8"
+        android:text="热门城市"
+        android:textColor="@color/colorTextTitle"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/search_location_item" />
+
+    <com.zhy.view.flowlayout.TagFlowLayout
+        android:id="@+id/hot_city_flow_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/hot_city_tv"
+        app:max_select="0" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

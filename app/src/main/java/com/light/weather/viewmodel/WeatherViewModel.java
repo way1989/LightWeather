@@ -1,9 +1,10 @@
 package com.light.weather.viewmodel;
 
 import android.app.Application;
-import android.arch.lifecycle.AndroidViewModel;
-import android.support.annotation.NonNull;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
 
 import com.google.gson.GsonBuilder;
 import com.light.weather.BuildConfig;
@@ -14,7 +15,6 @@ import com.light.weather.bean.City;
 import com.light.weather.bean.HeBasic;
 import com.light.weather.bean.HeWeather6;
 import com.light.weather.bean.HotCity;
-import com.light.weather.bean.SearchItem;
 import com.light.weather.data.IRepositoryManager;
 import com.light.weather.db.DBUtil;
 import com.light.weather.ui.main.MainActivity;
@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.reactivex.functions.Function;
 import me.jessyan.retrofiturlmanager.RetrofitUrlManager;
 
@@ -47,30 +48,19 @@ public class WeatherViewModel extends AndroidViewModel {
         mRepositoryManager = manager;
     }
 
-    public Observable<List<SearchItem>> getDefaultCities() {
-        return Observable.create(e -> {
-            List<SearchItem> searchItems = new ArrayList<>();
-
-            final City cityByLocation = DBUtil.getCityByLocation(getApplication());
-            SearchItem locationTitle = new SearchItem(true, getApplication().getString(R.string.location_city_title));
-            searchItems.add(locationTitle);
-            searchItems.add(new SearchItem(cityByLocation));
-
-            String json = getApplication().getString(R.string.hot_city_json);
-            List<City> hotCities = new GsonBuilder()
-                    .excludeFieldsWithModifiers(Modifier.PROTECTED)//忽略protected字段
-                    .create().fromJson(json, HotCity.class).getCities();
-            SearchItem hotTitle = new SearchItem(true, getApplication().getString(R.string.hot_city_title));
-            searchItems.add(hotTitle);
-            for (City city : hotCities) {
-                searchItems.add(new SearchItem(city));
-            }
-            e.onNext(searchItems);
-            e.onComplete();
-        });
+    public Single<City> getLocationCity() {
+        return Single.just(getApplication().getApplicationContext())
+                .map(DBUtil::getCityByLocation);
     }
 
-    public Observable<List<City>> search(String query) {
+    public Single<List<City>> getDefaultCities() {
+        return Single.just(getApplication().getString(R.string.hot_city_json))
+                .map(json -> new GsonBuilder()
+                        .excludeFieldsWithModifiers(Modifier.PROTECTED)//忽略protected字段
+                        .create().fromJson(json, HotCity.class).getCities());
+    }
+
+    public Observable<List<City>> search(CharSequence query) {
         RetrofitUrlManager.getInstance().fetchDomain(ApiService.DOMAIN_NAME_SEARCH);
         return mRepositoryManager.obtainRetrofitService(ApiService.class)
                 .searchCity(BuildConfig.HEWEATHER_KEY, query)

@@ -14,12 +14,13 @@
 package com.light.weather.util;
 
 import android.os.Looper;
-import android.support.annotation.RestrictTo;
+
+import androidx.annotation.RestrictTo;
 
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposables;
 
-import static android.support.annotation.RestrictTo.Scope.LIBRARY_GROUP;
+import static androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP;
 
 @RestrictTo(LIBRARY_GROUP)
 public final class Preconditions {

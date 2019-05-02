@@ -1,9 +1,10 @@
 package com.light.weather.adapter;
 
-import android.support.annotation.LayoutRes;
-import android.support.v4.content.ContextCompat;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.annotation.LayoutRes;
+import androidx.core.content.ContextCompat;
 
 import com.chad.library.adapter.base.BaseItemDraggableAdapter;
 import com.chad.library.adapter.base.BaseViewHolder;

@@ -2,8 +2,9 @@ package com.light.weather.util;
 
 
 import android.content.res.Resources;
-import android.support.annotation.DrawableRes;
 import android.text.TextUtils;
+
+import androidx.annotation.DrawableRes;
 
 import com.light.weather.R;
 import com.light.weather.bean.HeBasic;
