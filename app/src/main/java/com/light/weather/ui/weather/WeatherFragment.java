@@ -3,7 +3,14 @@ package com.light.weather.ui.weather;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -17,6 +24,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -33,6 +41,7 @@ import com.light.weather.bean.HeWeather6;
 import com.light.weather.ui.base.BaseDagger2Fragment;
 import com.light.weather.util.RxSchedulers;
 import com.light.weather.util.ShareUtils;
+import com.light.weather.util.UiUtil;
 import com.light.weather.util.WeatherUtil;
 import com.light.weather.viewmodel.WeatherViewModel;
 import com.light.weather.widget.AqiView;
@@ -45,11 +54,16 @@ import com.light.weather.widget.dynamic.WeatherType;
 import com.tbruyelle.rxpermissions2.Permission;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import butterknife.BindView;
 import io.reactivex.ObservableSource;
+import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Function;
 
@@ -59,7 +73,7 @@ import io.reactivex.functions.Function;
 
 public class WeatherFragment extends BaseDagger2Fragment<WeatherViewModel> implements SwipeRefreshLayout.OnRefreshListener {
     private static final String TAG = "WeatherFragment";
-    private static final String REQUEST_PERMISSIONS[] = BuildConfig.DEBUG
+    private static final String[] REQUEST_PERMISSIONS = BuildConfig.DEBUG
             ? new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION,
             Manifest.permission.WRITE_EXTERNAL_STORAGE}
@@ -133,11 +147,35 @@ public class WeatherFragment extends BaseDagger2Fragment<WeatherViewModel> imple
                 if (System.currentTimeMillis() - mLastClickMenuTime > 2000L) {
                     Log.d(TAG, "onOptionsItemSelected: id = share...");
                     final Activity activity = getActivity();
-                    final HeWeather6 weather = getWeather();
-                    if (activity != null && weather != null) {
-                        final String shareInfo = WeatherUtil.getInstance().getShareMessage(weather);
-                        ShareUtils.shareText(activity, shareInfo, getString(R.string.action_share));
-                    }
+                    mDisposable.add(Single.just(activity)
+                            .map((Function<Context, String>) context -> {
+                                Bitmap backgroundBitmap = mListener.getBackgroundBitmap();
+                                String dir = getContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES).getAbsolutePath();
+                                SimpleDateFormat format = new SimpleDateFormat("'Weather'_yyyyMMdd_HHmmss'.jpg'", Locale.US);
+                                String title = format.format(new Date(System.currentTimeMillis()));
+                                Bitmap bitmap = UiUtil.getBitmapByView(mWWeatherScrollView, backgroundBitmap);
+
+                                UiUtil.saveToGallery(context, bitmap, dir, title, Bitmap.CompressFormat.JPEG, 100);
+                                return dir + File.separator + title;
+                            })
+                            .compose(RxSchedulers.io_main_single())
+                            .subscribe(path -> {
+                                Log.d(TAG, "onSuccess: " + path);
+                                final HeWeather6 weather = getWeather();
+                                if (activity != null && weather != null) {
+                                    final String shareInfo = WeatherUtil.getInstance().getShareMessage(weather);
+                                    Uri contentUri = null;
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                        contentUri = FileProvider.getUriForFile(activity,
+                                                BuildConfig.APPLICATION_ID + ".fileProvider",
+                                                new File(path));
+                                    } else {
+                                        contentUri = Uri.parse("file://" + path);
+                                    }
+                                    ShareUtils.shareImage(activity,contentUri, shareInfo);
+                                }
+                            }, throwable -> Log.w(TAG, "onError: ", throwable))
+                    );
                     mLastClickMenuTime = System.currentTimeMillis();
                 }
                 return true;
@@ -468,7 +506,7 @@ public class WeatherFragment extends BaseDagger2Fragment<WeatherViewModel> imple
         }
     }
 
-    protected void toast(String msg) {
+    private void toast(String msg) {
         Toast.makeText(getContext(), msg, Toast.LENGTH_LONG).show();
     }
 
@@ -501,6 +539,8 @@ public class WeatherFragment extends BaseDagger2Fragment<WeatherViewModel> imple
         void onDrawerTypeChange(WeatherType type);
 
         void updateLocationCity(City city);
+
+        Bitmap getBackgroundBitmap();
     }
 
 }

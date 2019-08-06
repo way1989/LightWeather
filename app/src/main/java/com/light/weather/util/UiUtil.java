@@ -3,16 +3,19 @@ package com.light.weather.util;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Paint.FontMetrics;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.provider.MediaStore;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.TextUtils;
@@ -21,12 +24,17 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.ScrollView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 public class UiUtil {
+    private static final String TAG = "UiUtil";
 
     public static int dp2px(Context context, float dp) {
         final float scale = context.getResources().getDisplayMetrics().density;
@@ -179,4 +187,122 @@ public class UiUtil {
                 spannableString.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         return spannableString;
     }
-}
+
+    /**
+     * 截取scrollview的屏幕
+     *
+     * @param scrollView
+     * @param backgroundBitmap
+     * @return
+     */
+    public static Bitmap getBitmapByView(ScrollView scrollView, Bitmap backgroundBitmap) {
+        if (scrollView == null) {
+            return null;
+        }
+        int h = 0;
+        Bitmap bitmap;
+        // 获取scrollview实际高度
+        for (int i = 0, size = scrollView.getChildCount(); i < size; i++) {
+            final View childView = scrollView.getChildAt(i);
+            h += childView.getHeight();
+            //childView.setBackgroundColor(Color.WHITE);
+        }
+        // 创建对应大小的bitmap
+        bitmap = Bitmap.createBitmap(scrollView.getWidth(), h, Bitmap.Config.RGB_565);
+        final Canvas canvas = new Canvas(bitmap);
+        canvas.drawBitmap(backgroundBitmap, new Matrix(), null);
+        scrollView.draw(canvas);
+        return bitmap;
+    }
+
+    /**
+     * Returns the bitmap that represents the chart.
+     *
+     * @return bitmap
+     */
+    public static Bitmap getBitmapByView(View view) {
+        if (view == null) {
+            return null;
+        }
+        // Define a bitmap with the same size as the view
+        Bitmap returnedBitmap = Bitmap.createBitmap(view.getWidth(), view.getHeight(), Bitmap.Config.RGB_565);
+        // Bind a canvas to it
+        Canvas canvas = new Canvas(returnedBitmap);
+        // Get the view's background
+        Drawable bgDrawable = view.getBackground();
+        if (bgDrawable != null) {
+            // has background drawable, then draw it on the canvas
+            bgDrawable.draw(canvas);
+        } else {
+            // does not have background drawable, then draw white background on
+            // the canvas
+            canvas.drawColor(Color.WHITE);
+        }
+        // draw the view on the canvas
+        view.draw(canvas);
+        // return the bitmap
+        return returnedBitmap;
+    }
+
+    public static boolean saveToGallery(Context context, Bitmap bitmap, String fileDir, String fileName,
+                                        Bitmap.CompressFormat format, int quality) {
+        // restrain quality
+        if (quality < 1 || quality > 100) {
+            quality = 80;
+        }
+        File file = new File(fileDir);
+        if (!file.exists()) {
+            if (!file.mkdirs()) {
+                return false;
+            }
+        }
+
+        String mimeType;
+        switch (format) {
+            case PNG:
+                mimeType = "image/png";
+                if (!fileName.endsWith(".png")) {
+                    fileName += ".png";
+                }
+                break;
+            case WEBP:
+                mimeType = "image/webp";
+                if (!fileName.endsWith(".webp")) {
+                    fileName += ".webp";
+                }
+                break;
+            case JPEG:
+            default:
+                mimeType = "image/jpeg";
+                if (!(fileName.endsWith(".jpg") || fileName.endsWith(".jpeg"))) {
+                    fileName += ".jpg";
+                }
+                break;
+        }
+
+        String filePath = fileDir + File.separator + fileName;
+        try (FileOutputStream out = new FileOutputStream(filePath)) {
+            bitmap.compress(format, quality, out);
+            out.flush();
+        } catch (IOException e) {
+            Log.e(TAG, "saveToGallery: ", e);
+            return false;
+        }
+        long size = new File(filePath).length();
+
+        ContentValues values = new ContentValues(7);
+
+        // store the details
+        values.put(MediaStore.Images.Media.TITLE, fileName);
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
+        values.put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis());
+        values.put(MediaStore.Images.Media.MIME_TYPE, mimeType);
+        values.put(MediaStore.Images.Media.ORIENTATION, 0);
+        values.put(MediaStore.Images.Media.DATA, filePath);
+        values.put(MediaStore.Images.Media.SIZE, size);
+
+        return context.getContentResolver()
+                .insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) != null;
+    }
+
+    }

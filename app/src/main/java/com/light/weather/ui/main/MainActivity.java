@@ -1,6 +1,7 @@
 package com.light.weather.ui.main;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -168,11 +169,10 @@ public class MainActivity extends BaseDagger2Activity<WeatherViewModel>
         Log.d(TAG, "getCities: start.... mViewModel = " + mViewModel);
         mDisposable.add(mViewModel.getCities(false)
                 .compose(RxSchedulers.io_main())
-                .subscribe(cities -> updateAdapter(cities),
-                        throwable -> {
-                            Toast.makeText(getApplicationContext(), "getCities onError: " + throwable, Toast.LENGTH_LONG).show();
-                            Log.e(TAG, "getCities onError: ", throwable);
-                        }));
+                .subscribe(this::updateAdapter, throwable -> {
+                    Toast.makeText(getApplicationContext(), "getCities onError: " + throwable, Toast.LENGTH_LONG).show();
+                    Log.e(TAG, "getCities onError: ", throwable);
+                }));
     }
 
     @Override
@@ -192,6 +192,14 @@ public class MainActivity extends BaseDagger2Activity<WeatherViewModel>
                 break;
             }
         }
+    }
+
+    @Override
+    public Bitmap getBackgroundBitmap() {
+        if (mDynamicWeatherView != null) {
+            return mDynamicWeatherView.getBitmap();
+        }
+        return null;
     }
 
     public static class MainFragmentPagerAdapter<T extends City> extends FragmentStatePagerAdapter {
@@ -228,13 +236,13 @@ public class MainActivity extends BaseDagger2Activity<WeatherViewModel>
         }
 
         @Override
-        public void destroyItem(ViewGroup container, int position, Object object) {
+        public void destroyItem(@NonNull ViewGroup container, int position, @NonNull Object object) {
             container.removeView(((Fragment) object).getView());
             super.destroyItem(container, position, object);
         }
 
         @Override
-        public void setPrimaryItem(ViewGroup container, int position, Object object) {
+        public void setPrimaryItem(@NonNull ViewGroup container, int position, @NonNull Object object) {
             super.setPrimaryItem(container, position, object);
         }
 

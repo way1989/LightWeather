@@ -80,6 +80,7 @@ public class RxLocation extends Observable<City> {
                     mLocationCount++;
                     if (mLocationCount > MAX_NUM) {
                         mObserver.onError(new Throwable(location.getAdCode() + ": " + location.getErrorInfo()));
+                        dispose();
                     }
                     return;
                 }

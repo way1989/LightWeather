@@ -6,7 +6,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.4.0'
+        classpath 'com.android.tools.build:gradle:3.4.2'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -39,9 +39,9 @@ ext {
     runnerVersion = '1.0.2'
     espressoVersion = '3.0.2'
     daggerVersion = '2.16'
-    leakcanaryVersion = '1.6.1'
+    leakcanaryVersion = '1.6.3'
     rxjavaVersion = '2.2.0'
-    rxandroidVersion='2.1.0'
+    rxandroidVersion='2.1.1'
     rxbinding='2.2.0'
     retrofitVersion='2.4.0'
     okhttpVersion='3.11.0'
@@ -49,7 +49,7 @@ ext {
     adapterHelperVersion='2.9.45'
     sqliteonweb='1.0.2'
     arch='1.1.1'
-    EasySwipeMenuLayout='1.1.2'
+    EasySwipeMenuLayout='1.1.4'
     urlManager='1.4.0'
     stetho='1.5.0'
 }

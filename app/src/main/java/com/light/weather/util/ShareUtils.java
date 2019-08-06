@@ -23,7 +23,10 @@ public class ShareUtils {
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
         shareIntent.setType("image/jpeg");
-        context.startActivity(Intent.createChooser(shareIntent, title));
+        shareIntent.putExtra(Intent.EXTRA_SUBJECT, title);
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        shareIntent.setDataAndType(uri, "application/vnd.android.package-archive");
+        context.startActivity(Intent.createChooser(shareIntent, "share to"));
     }
 
     public static void shareImage(Context context, File file, String title) {

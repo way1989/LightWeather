@@ -4,8 +4,10 @@ import android.app.Activity;
 import android.app.Application;
 import android.util.Log;
 
+import com.billy.android.swipe.SmartSwipeBack;
 import com.facebook.stetho.Stetho;
 import com.light.weather.di.AppInjector;
+import com.light.weather.ui.main.MainActivity;
 import com.squareup.leakcanary.LeakCanary;
 import com.tencent.bugly.crashreport.CrashReport;
 
@@ -46,6 +48,8 @@ public class App extends Application implements HasActivityInjector {
         }
 
         setRxJavaErrorHandler();
+        //仿微信带联动效果的透明侧滑返回
+        SmartSwipeBack.activitySlidingBack(this, activity -> !(activity instanceof MainActivity));
     }
 
     @Override
