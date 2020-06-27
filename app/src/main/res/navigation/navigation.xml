@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  Copyright (c) 2019 Google Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+  in compliance with the License. You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software distributed under the License
+  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+  or implied. See the License for the specific language governing permissions and limitations under
+  the License.
+  -->
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/navigation.xml"
+    app:startDestination="@id/weather_pager">
+
+    <!--  <fragment
+          android:id="@+id/onboarding"
+          android:name="com.materialstudies.owl.ui.onboarding.OnboardingFragment"
+          android:label="fragment_onboarding"
+          tools:layout="@layout/fragment_onboarding">
+        <action
+            android:id="@+id/action_onboarding_to_featured"
+            app:destination="@id/featured"
+            app:popUpTo="@+id/featured"/>
+      </fragment>-->
+
+    <fragment
+        android:id="@+id/weather_pager"
+        android:name="top.broncho.weather.ui.main.weather.WeatherPagerFragment"
+        android:label="fragment_weather_pager"
+        tools:layout="@layout/fragment_weather_pager">
+    </fragment>
+    <!--
+      <fragment
+          android:id="@+id/history_lottery"
+          android:name="top.broncho.lottery.ui.main.HistoryLotteryFragment"
+          android:label="fragment_featured"
+          tools:layout="@layout/fragment_history_lottery">
+        <action
+             android:id="@+id/action_featured_to_learn"
+             app:destination="@id/learn"
+             app:exitAnim="@null"/>
+       app:exitAnim="@anim/shrink_fade_out_center"
+      </fragment>
+
+      <fragment
+          android:id="@+id/camera2"
+          android:name="top.broncho.lottery.ui.camera.Camera2Fragment"
+          android:label="fragment_camera2"
+          tools:layout="@layout/fragment_camera2">
+          <action
+              android:id="@+id/action_camera2_to_ocr"
+              app:destination="@id/ocr"
+              app:exitAnim="@null" />
+      </fragment>
+
+      <fragment
+          android:id="@+id/ocr"
+          android:name="top.broncho.lottery.ui.main.OcrFragment"
+          android:label="fragment_ocr"
+          tools:layout="@layout/fragment_ocr">
+          <argument
+              android:name="imagePath"
+              app:argType="string" />
+      </fragment>
+
+      <fragment
+          android:id="@+id/deatil"
+          android:name="top.broncho.lottery.ui.main.LotteryDetailFragment"
+          android:label="fragment_detail"
+          tools:layout="@layout/fragment_lottery_detail">
+          <argument
+              android:name="lotteryEntity"
+              app:argType="top.broncho.lottery.db.LotteryEntity" />
+      </fragment>
+       <fragment
+           android:id="@+id/lessonsSheetFragment"
+           android:name="com.materialstudies.owl.ui.lessons.LessonsSheetFragment"
+           android:label="fragment_lessons_sheet"
+           tools:layout="@layout/fragment_lessons_sheet">
+         <action
+             android:id="@+id/action_lessons_sheet_to_lesson"
+             app:launchSingleTop="true"
+             app:destination="@+id/lesson"/>
+       </fragment>
+
+       <fragment
+           android:id="@+id/lesson"
+           android:name="com.materialstudies.owl.ui.lessons.LessonFragment"
+           android:label="fragment_lesson"
+           tools:layout="@layout/fragment_lesson">
+         <argument
+             android:name="course_id"
+             app:argType="long"/>
+         <argument
+             android:name="step_number"
+             app:argType="integer"/>
+       </fragment>-->
+
+</navigation>

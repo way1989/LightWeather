@@ -1,0 +1,119 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+apply plugin: 'dagger.hilt.android.plugin'
+
+android {
+    compileSdkVersion 29
+    buildToolsVersion "29.0.3"
+
+    defaultConfig {
+        applicationId "top.broncho.weather"
+        minSdkVersion 22
+        targetSdkVersion 29
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        //buildConfigField "String", "BUGLY_APPID", BUGLY_APP_ID
+        buildConfigField "String", "HEWEATHER_KEY", HEWEATHER_KEY
+        buildConfigField "String", "AMAP_KEY", AMAP_KEY
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    // For Kotlin projects
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
+    def filePrivateProperties = file("../jks/public.properties")
+    if (filePrivateProperties.exists()) {
+        signingConfigs {
+            release {
+                Properties propsPrivate = new Properties()
+                propsPrivate.load(new FileInputStream(filePrivateProperties))
+
+                storeFile file(propsPrivate['key.store'])
+                keyAlias propsPrivate['key.alias']
+                storePassword propsPrivate['key.store.password']
+                keyPassword propsPrivate['key.alias.password']
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            if (filePrivateProperties.exists()) {
+                signingConfig signingConfigs.release
+            }
+        }
+
+        release {
+            if (filePrivateProperties.exists()) {
+                signingConfig signingConfigs.release
+            }
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    //打开 dataBinding
+    buildFeatures{
+        dataBinding = true
+    }
+
+    //配置生成的文件名
+    applicationVariants.all { variant ->//获取 variant 参数，就是 productFlavor x buildType
+        variant.outputs.all {
+            if (outputFileName.endsWith('-release.apk')) {//变种名以release.apk结尾时才修改名字
+                outputFileName = outputFileName.replace(outputFileName, "LightWeather" + "_V" + variant.versionName + ".apk")
+            } else if (outputFileName.endsWith('-debug.apk')) {
+                outputFileName = outputFileName.replace(outputFileName, "LightWeather-debug" + "_V" + variant.versionName + ".apk")
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation 'androidx.core:core-ktx:1.3.0'
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.2.0'
+    testImplementation 'junit:junit:4.13'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+
+    //kotlin Anko Commons
+    implementation "org.jetbrains.anko:anko-commons:$rootProject.anko_version"
+    implementation "org.jetbrains.anko:anko-design:$rootProject.anko_version"
+
+    // androidx.activity.viewModels
+    implementation "androidx.activity:activity-ktx:$activity_version"
+    // androidx.fragment.app.viewModels
+    implementation "androidx.fragment:fragment-ktx:$fragment_version"
+
+    // Navigation library
+    implementation "androidx.navigation:navigation-fragment-ktx:$rootProject.nav_version"
+    implementation "androidx.navigation:navigation-ui-ktx:$rootProject.nav_version"
+
+    //retrofit
+    implementation "com.squareup.retrofit2:retrofit:$rootProject.retrofitVersion"
+    implementation "com.squareup.retrofit2:converter-gson:$rootProject.retrofitVersion"
+
+    //okhttp
+    implementation "com.squareup.okhttp3:okhttp:$rootProject.okhttpVersion"
+    implementation "com.squareup.okhttp3:logging-interceptor:$rootProject.okhttpVersion"
+
+    implementation "com.google.dagger:hilt-android:2.28-alpha"
+    kapt "com.google.dagger:hilt-android-compiler:2.28-alpha"
+    implementation 'androidx.hilt:hilt-lifecycle-viewmodel:1.0.0-alpha01'
+    kapt 'androidx.hilt:hilt-compiler:1.0.0-alpha01'
+}
